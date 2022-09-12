@@ -30,14 +30,7 @@ class Wall(arcade.Sprite):
             return "vert"
         else:
             return "horiz"
-    
-    # def get_edge_range(self):
-    #     topEdge = (self.top - WALL_LENGTH/10.0, self.top + WALL_LENGTH/10.0)
-    #     bottomEdge = (self.bottom - WALL_LENGTH/10.0, self.bottom + WALL_LENGTH/10.0)
-    #     leftEdge = (self.left - WALL_LENGTH/10.0, self.left + WALL_LENGTH/10.0)
-    #     rightEdge = (self.right - WALL_LENGTH/10.0, self.right + WALL_LENGTH/10.0)
-    #     return [topEdge, bottomEdge, leftEdge, rightEdge]
-        
+
 
 class MovingSprite(arcade.Sprite):
     def __init__(self, image, scale):
@@ -105,12 +98,24 @@ class ZombieSim(arcade.Window):
             self.all_sprites.append(humans[i])
         
         walls = []
-        for i in range(8):
-            walls += [Wall("images/vert.png", SCALING/5, 200, 50*i+150)]
-            walls += [Wall("images/vert.png", SCALING/5, 600, 50*i+150)]
-            walls += [Wall("images/horiz.png", SCALING/5, 50*i+200, 100)]
-        walls += [Wall("images/vert.png", SCALING/5, 200, 350)]
-        walls += [Wall("images/vert.png", SCALING/5, 200, 400)]
+        # DEFAULT MAP
+        # for i in range(8):
+        #     if i == 3 or i == 4:
+        #         continue
+        #     walls += [Wall("images/vert.png", SCALING/5, 200, 50*i+150)]
+        #     walls += [Wall("images/vert.png", SCALING/5, 600, 50*i+150)]
+        #     walls += [Wall("images/horiz.png", SCALING/5, 50*i+200, 100)]
+        #     walls += [Wall("images/horiz.png", SCALING/5, 50*i+200, 500)]
+
+        # RANDOM MAP
+        for i in range(9):
+            for j in range(9):
+                flip = random.randint(0,1)
+                if flip and j != 8:
+                    walls += [Wall("images/vert.png", SCALING/5, 50*i+200, 50*j+150)]
+                flip = random.randint(0,1)
+                if flip and i != 8:
+                    walls += [Wall("images/horiz.png", SCALING/5, 50*i+200, 50*j+100)]
         
         for wall in walls:
             self.walls_list.append(wall)
@@ -133,23 +138,18 @@ class ZombieSim(arcade.Window):
 
             struck_wall = moving.collides_with_list(self.walls_list)
             if struck_wall:
-                # edges = struck_wall[0].get_edge_range()
                 if struck_wall[0].get_texture() == "vert":
-                    # if moving.bottom >= edges[0][0] and moving.bottom <= edges[0][1]:
-                    #     moving.velocity = (-oldvel[0],-oldvel[1])
-                    # elif moving.top >= edges[1][0] and moving.top <= edges[1][1]:
-                    #     moving.velocity = (-oldvel[0],-oldvel[1])
-                    # else:
                     moving.velocity = (-oldvel[0],oldvel[1])
-                    # moving.left -= 2*oldvel[0]
-                else:
-                    # if moving.right >= edges[2][0] and moving.right <= edges[2][1]:
-                    #     moving.velocity = (-oldvel[0],-oldvel[1])
-                    # elif moving.left >= edges[3][0] and moving.left <= edges[3][1]:
-                    #     moving.velocity = (-oldvel[0],-oldvel[1])
-                    # else:           
+                    if oldvel[0] < 0:
+                        moving.left = struck_wall[0].right
+                    else:
+                        moving.right = struck_wall[0].left
+                else:         
                     moving.velocity = (oldvel[0],-oldvel[1]) 
-                    # moving.top -= 2*oldvel[1]
+                    if oldvel[1] < 0:
+                        moving.bottom = struck_wall[0].top
+                    else:
+                        moving.top = struck_wall[0].bottom
 
             if moving.bottom < 0:
                 moving.velocity = (oldvel[0],-oldvel[1])

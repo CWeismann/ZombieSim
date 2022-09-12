@@ -3,12 +3,14 @@
 -walls bounce humans and zombies
 -implement movingSprite to simplify
 -humans are infected for some amount of time before becoming zombies
-fix wall trap glitch
+-fix wall trap glitch (LIKELY SOLVED)
+-random map generation
 line of sight
     zombies follow closest human in line of sight
     humans run from closest zombie in line of sight
     walls block line of sight
 implement doors that can be opened by humans but not zombies
+better random map generation
 items
     knife: kills first zombie who hits human
     gun: might kill zombie in line of sight
