@@ -31,12 +31,12 @@ class Wall(arcade.Sprite):
         else:
             return "horiz"
     
-    def get_edge_range(self):
-        topEdge = (self.top - WALL_LENGTH/10.0, self.top + WALL_LENGTH/10.0)
-        bottomEdge = (self.bottom - WALL_LENGTH/10.0, self.bottom + WALL_LENGTH/10.0)
-        leftEdge = (self.left - WALL_LENGTH/10.0, self.left + WALL_LENGTH/10.0)
-        rightEdge = (self.right - WALL_LENGTH/10.0, self.right + WALL_LENGTH/10.0)
-        return [topEdge, bottomEdge, leftEdge, rightEdge]
+    # def get_edge_range(self):
+    #     topEdge = (self.top - WALL_LENGTH/10.0, self.top + WALL_LENGTH/10.0)
+    #     bottomEdge = (self.bottom - WALL_LENGTH/10.0, self.bottom + WALL_LENGTH/10.0)
+    #     leftEdge = (self.left - WALL_LENGTH/10.0, self.left + WALL_LENGTH/10.0)
+    #     rightEdge = (self.right - WALL_LENGTH/10.0, self.right + WALL_LENGTH/10.0)
+    #     return [topEdge, bottomEdge, leftEdge, rightEdge]
         
 
 class MovingSprite(arcade.Sprite):
@@ -127,28 +127,29 @@ class ZombieSim(arcade.Window):
             infected.inc_infection_time(delta_time)
             if infected.get_infection_time() >= INCUBATION_PERIOD:
                 self.make_zombie(infected)
-            print(infected.get_infection_time())
         
         for moving in self.moving_list:
             oldvel = moving.velocity
 
             struck_wall = moving.collides_with_list(self.walls_list)
             if struck_wall:
-                edges = struck_wall[0].get_edge_range()
+                # edges = struck_wall[0].get_edge_range()
                 if struck_wall[0].get_texture() == "vert":
-                    if moving.bottom >= edges[0][0] and moving.bottom <= edges[0][1]:
-                        moving.velocity = (-oldvel[0],-oldvel[1])
-                    elif moving.top >= edges[1][0] and moving.top <= edges[1][1]:
-                        moving.velocity = (-oldvel[0],-oldvel[1])
-                    else:
-                        moving.velocity = (-oldvel[0],oldvel[1])
+                    # if moving.bottom >= edges[0][0] and moving.bottom <= edges[0][1]:
+                    #     moving.velocity = (-oldvel[0],-oldvel[1])
+                    # elif moving.top >= edges[1][0] and moving.top <= edges[1][1]:
+                    #     moving.velocity = (-oldvel[0],-oldvel[1])
+                    # else:
+                    moving.velocity = (-oldvel[0],oldvel[1])
+                    # moving.left -= 2*oldvel[0]
                 else:
-                    if moving.right >= edges[2][0] and moving.right <= edges[2][1]:
-                        moving.velocity = (-oldvel[0],-oldvel[1])
-                    elif moving.left >= edges[3][0] and moving.left <= edges[3][1]:
-                        moving.velocity = (-oldvel[0],-oldvel[1])
-                    else:
-                        moving.velocity = (-oldvel[0],oldvel[1])
+                    # if moving.right >= edges[2][0] and moving.right <= edges[2][1]:
+                    #     moving.velocity = (-oldvel[0],-oldvel[1])
+                    # elif moving.left >= edges[3][0] and moving.left <= edges[3][1]:
+                    #     moving.velocity = (-oldvel[0],-oldvel[1])
+                    # else:           
+                    moving.velocity = (oldvel[0],-oldvel[1]) 
+                    # moving.top -= 2*oldvel[1]
 
             if moving.bottom < 0:
                 moving.velocity = (oldvel[0],-oldvel[1])
