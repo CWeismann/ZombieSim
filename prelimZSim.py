@@ -1,6 +1,5 @@
 import arcade
 import random
-import threading
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
