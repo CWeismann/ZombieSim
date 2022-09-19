@@ -8,13 +8,20 @@ SCALING = 2.0
 
 NUM_ZOMBIES = 2
 NUM_HUMANS = 5
-INCUBATION_PERIOD = 10.0
+INCUBATION_PERIOD = 10.0 # seconds
+SPEED = 3.0
+WALL_GEN = 2 # larger value = more walls
 
 WALL_LENGTH = SCALING * 25 # May be inaccurate - testing needed
 
 class Wall(arcade.Sprite):
     def __init__(self, image, scale, left, top):
-        """"""
+        """
+        Initializes a new Wall sprite
+        Inputs: the starting sprite image, the scaling of the screen,
+                the x coordinate of the left of the sprite, and the y
+                coordinate of the top of the sprite
+        """
         super().__init__(image, scale)
         self.left = left
         self.top = top
@@ -34,7 +41,10 @@ class Wall(arcade.Sprite):
 
 class MovingSprite(arcade.Sprite):
     def __init__(self, image, scale):
-        """"""
+        """
+        Initializes a new MovingSprite sprite (Human/Zombie/Infected)
+        Inputs: the starting sprite image, and the scaling of the screen
+        """
         super().__init__(image, scale)
 
         self.human_texture = arcade.load_texture("images/circleNoFill.png")
@@ -43,6 +53,7 @@ class MovingSprite(arcade.Sprite):
 
         self.infection_time = 0
 
+    # Texture changes for role changes
     def become_human(self):
         self.texture = self.human_texture
     def become_infected(self):
@@ -50,17 +61,24 @@ class MovingSprite(arcade.Sprite):
     def become_zombie(self):
         self.texture = self.zombie_texture
 
+    # Returns the amount of time that an infected has been infected
     def get_infection_time(self):
         return self.infection_time
 
+    # Increases the amount of time that an infected has been infected
     def inc_infection_time(self, dt):
         self.infection_time += dt
 
 class ZombieSim(arcade.Window):
-    """DOCSTRING"""
+    """
+    The game itself
+    """
 
     def __init__(self, width, height, title):
-        """"""
+        """
+        Initializes a new instance of the game, creating sprite lists
+        Inputs: the width, height, and title of the screen
+        """
         super().__init__(width, height, title)
 
         self.zombies_list = arcade.SpriteList()
@@ -74,29 +92,36 @@ class ZombieSim(arcade.Window):
 
 
     def setup(self):
-        """"""
+        """
+        Sets up the walls, zombies, humans, and arcade background.
+        Currently has capabilities for a random map of walls or a
+        prebuilt "house"
+        """
         arcade.set_background_color(arcade.color.WHITE)
         
+        # Initialize Zombies
         zombies = []
         for i in range(NUM_ZOMBIES):
             zombies += [MovingSprite("images/cross.png", SCALING/20)]
-            zombies[i].left = 30 * (i + 1)
-            zombies[i].top = 30
-            zombies[i].velocity = (random.random()*4-2, random.random()*4-2)
+            zombies[i].left = (i + 1) * SCREEN_WIDTH/(NUM_ZOMBIES+1)
+            zombies[i].top = SCREEN_HEIGHT*11/12
+            zombies[i].velocity = (random.random()*SPEED-SPEED/2, random.random()*SPEED-SPEED/2)
             self.zombies_list.append(zombies[i])
             self.moving_list.append(zombies[i])
             self.all_sprites.append(zombies[i])
         
+        #Initialize Humans
         humans = []
         for i in range(NUM_HUMANS):
             humans += [MovingSprite("images/circleNoFill.png", SCALING/20)]
-            humans[i].left = 30 * (i + 1)
-            humans[i].top = 230
-            humans[i].velocity = (random.random()*4-2, random.random()*4-2)
+            humans[i].left = (i + 1) * SCREEN_WIDTH/(NUM_HUMANS+1)
+            humans[i].top = SCREEN_HEIGHT/12
+            humans[i].velocity = (random.random()*SPEED-SPEED/2, random.random()*SPEED-SPEED/2)
             self.humans_list.append(humans[i])
             self.moving_list.append(humans[i])
             self.all_sprites.append(humans[i])
         
+        # Initialize Walls
         walls = []
         # DEFAULT MAP
         # for i in range(8):
@@ -110,11 +135,11 @@ class ZombieSim(arcade.Window):
         # RANDOM MAP
         for i in range(9):
             for j in range(9):
-                flip = random.randint(0,1)
-                if flip and j != 8:
+                flip = random.randint(0,WALL_GEN)
+                if not flip and j != 8:
                     walls += [Wall("images/vert.png", SCALING/5, 50*i+200, 50*j+150)]
-                flip = random.randint(0,1)
-                if flip and i != 8:
+                flip = random.randint(0,WALL_GEN)
+                if not flip and i != 8:
                     walls += [Wall("images/horiz.png", SCALING/5, 50*i+200, 50*j+100)]
         
         for wall in walls:
@@ -122,20 +147,32 @@ class ZombieSim(arcade.Window):
             self.all_sprites.append(wall)
 
     def on_update(self, delta_time: float = 1/60):
-        """"""
+        """
+        Runs each time the game is updated, checking for human/zombie
+        collisions, infected turning into zombies, and wall/edge collisions
+        Inputs: the time passed since the last update
+        """
 
+        # Check for human-zombie collisions
         for human in self.humans_list:
             if human.collides_with_list(self.zombies_list):
                 self.make_infected(human)
-            
+
+        # Check if any infected should become a zombie    
         for infected in self.infected_list:
             infected.inc_infection_time(delta_time)
             if infected.get_infection_time() >= INCUBATION_PERIOD:
                 self.make_zombie(infected)
         
+        # Check for wall and screen collisions
         for moving in self.moving_list:
             oldvel = moving.velocity
 
+            # Slight workaround here for getting stuck in walls
+            # Creates bizarre behavior when contacting wall edges repeatedly
+            # Improvement- use boundary_bottom, boundary_top, etc. to check
+            # if going to get stuck in wall and reverse other direction too?
+            # Might be less of a problem when intelligent agents are introduced.
             struck_wall = moving.collides_with_list(self.walls_list)
             if struck_wall:
                 if struck_wall[0].get_texture() == "vert":
@@ -164,22 +201,33 @@ class ZombieSim(arcade.Window):
 
 
     def on_draw(self):
-        """"""
+        """
+        Render the sprites on the screen
+        """
         arcade.start_render()
         self.all_sprites.draw()
 
     def make_human(self, new_human):
-        """"""
+        """
+        Makes a zombie into a human - TO BE IMPLEMENTED?
+        Inputs: the sprite to be changed
+        """
         pass
 
     def make_infected(self, new_infected):
-        """"""
+        """
+        Makes a human into an infected
+        Inputs: the sprite to be changed
+        """
         self.humans_list.remove(new_infected)
         new_infected.become_infected()
         self.infected_list.append(new_infected)
     
     def make_zombie(self, new_zombie):
-        """"""
+        """
+        Makes an infected into a zombie
+        Inputs: the sprite to be changed
+        """
         self.infected_list.remove(new_zombie)
         new_zombie.become_zombie()
         self.zombies_list.append(new_zombie)  

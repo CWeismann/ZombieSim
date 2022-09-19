@@ -5,12 +5,18 @@
 -humans are infected for some amount of time before becoming zombies
 -fix wall trap glitch (LIKELY SOLVED)
 -random map generation
+timer that tracks game length
+bottom of the screen reference for each movingSprite's stats
 line of sight
     zombies follow closest human in line of sight
     humans run from closest zombie in line of sight
     walls block line of sight
 implement doors that can be opened by humans but not zombies
-better random map generation
+random starting positions
+better map generation
+    -editable map generation constant
+human/zombie pathfinding- when not seeing other team, navigate walls more carefully
+infected can infect humans but humans won't run from them?
 items
     knife: kills first zombie who hits human
     gun: might kill zombie in line of sight
@@ -21,6 +27,7 @@ items
     key: can lock doors against other humans
     dog: attacks closest zombie, but might become one too
     disguise: zombies will not approach
+    scanner: can recognize infected
 zombies can break down doors
 multiple zombie types
 multiple human strategies
