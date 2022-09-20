@@ -53,7 +53,19 @@ class MovingSprite(arcade.Sprite):
         self.infected_texture = arcade.load_texture("images/circleFill.png")
         self.zombie_texture = arcade.load_texture("images/cross.png")
 
+        self.human_time = 0
         self.infection_time = 0
+
+        self.stat_text = arcade.Text(
+            text = "",
+            start_x = SCREEN_WIDTH / 2,
+            start_y = STATS_HEIGHT / 4,
+            color = arcade.color.BLACK,
+            font_size = 5,
+            font_name = "Kenney Pixel Square",
+            anchor_x = "center",
+            anchor_y = "center"
+        )
 
     # Texture changes for role changes
     def become_human(self):
@@ -66,11 +78,18 @@ class MovingSprite(arcade.Sprite):
     # Returns the amount of time that an infected has been infected
     def get_infection_time(self):
         return self.infection_time
-
+    def get_human_time(self):
+        return self.human_time
+    def get_stat_text(self):
+        return self.stat_text
     # Increases the amount of time that an infected has been infected
     def inc_infection_time(self, dt):
         self.infection_time += dt
-
+    def inc_human_time(self, dt):
+        self.human_time += dt
+    def set_stat_text(self, new_text, new_spacing):
+        self.stat_text.text = new_text
+        self.stat_text.x = new_spacing
     # Returns the current texture of the sprite
     def get_texture(self):
         if self.texture == self.human_texture:
@@ -203,21 +222,37 @@ class ZombieSim(arcade.Window):
         self.timer_text.text = f"{minutes:02d}:{seconds:02d}:{centiss:02d}"
         self.score_text.text = f"{len(self.humans_list)+len(self.infected_list)} Humans vs. {len(self.zombies_list)} Zombies"
         
-        self.stats_text.text = f"|  "
         mcount = 0
-        for i in self.moving_list:
-            if i.get_texture() != "zombie":
-                mcount += 1
-                self.stats_text.text += f"Human {mcount}: "
-                if i.get_texture() == "infected":
-                    self.stats_text.text += f"Infected  |  "
-                else:
-                    self.stats_text.text += f"Healthy  |  "
-        self.stats_text.text += f"  |  "
-        mcount = 0
-        for i in self.zombies_list:
+        for moving in self.moving_list:
             mcount += 1
-            self.stats_text.text += f"Zombie {mcount}: Zombified  |  "
+            status = ""
+            if moving.get_texture() == "zombie":
+                status = f"Zombified"
+            elif moving.get_texture() == "infected":
+                status = f"Infected"
+            else:
+                status = f"Healthy"
+            spacing = (mcount-0.5)*SCREEN_WIDTH/(NUM_HUMANS+NUM_ZOMBIES)
+            moving.set_stat_text(f"Person {mcount}:\n{status}", spacing)
+            print(spacing)
+
+        # self.stats_text.text = f"|"
+        # mcount = 0
+        # for i in self.moving_list:
+        #     # if i.get_texture() != "zombie":
+        #     mcount += 1
+        #     self.stats_text.text += f"  Person {mcount}: "
+        #     if i.get_texture() == "zombie":
+        #         self.stats_text.text += f"Zombified  |"
+        #     elif i.get_texture() == "infected":
+        #         self.stats_text.text += f"Infected  |"
+        #     else:
+        #         self.stats_text.text += f"Healthy  |"
+        # self.stats_text.text += f"  |  "
+        # mcount = 0
+        # for i in self.zombies_list:
+        #     mcount += 1
+        #     self.stats_text.text += f"Zombie {mcount}: Zombified  |  "
 
         # Check for human-zombie collisions
         for human in self.humans_list:
@@ -275,7 +310,13 @@ class ZombieSim(arcade.Window):
         self.timer_text.draw()
         self.score_text.draw()
         self.stats_text.draw()
+        for i in self.moving_list:
+            i.get_stat_text().draw()
         arcade.draw_line(0, STATS_HEIGHT, SCREEN_WIDTH, STATS_HEIGHT, arcade.color.BLACK, 3)
+        arcade.draw_line(0, STATS_HEIGHT/2, SCREEN_WIDTH, STATS_HEIGHT/2, arcade.color.BLACK, 3)
+        for i in range(NUM_HUMANS+NUM_ZOMBIES-1):
+            xco = (i+1)/(NUM_HUMANS+NUM_ZOMBIES)*SCREEN_WIDTH
+            arcade.draw_line(xco, 0, xco, STATS_HEIGHT/2, arcade.color.BLACK, 3)
 
     def make_human(self, new_human):
         """
