@@ -1,8 +1,10 @@
+from calendar import c
 import arcade
 import random
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
+STATS_HEIGHT = 100
 SCREEN_TITLE = "Zombie Sim"
 SCALING = 2.0
 
@@ -69,6 +71,15 @@ class MovingSprite(arcade.Sprite):
     def inc_infection_time(self, dt):
         self.infection_time += dt
 
+    # Returns the current texture of the sprite
+    def get_texture(self):
+        if self.texture == self.human_texture:
+            return "human"
+        elif self.texture == self.infected_texture:
+            return "infected"
+        else:
+            return "zombie"
+
 class ZombieSim(arcade.Window):
     """
     The game itself
@@ -90,6 +101,36 @@ class ZombieSim(arcade.Window):
 
         self.all_sprites = arcade.SpriteList()
 
+        self.total_time = 0.0
+        self.timer_text = arcade.Text(
+            text = "00:00:00",
+            start_x = SCREEN_WIDTH*14/15,
+            start_y = SCREEN_HEIGHT*14/15 + STATS_HEIGHT,
+            color = arcade.color.BLACK,
+            font_size = 10,
+            font_name= "courier",
+            anchor_x = "center"
+        )
+        self.score_text = arcade.Text(
+            text = f"{NUM_HUMANS} Humans vs. {NUM_ZOMBIES} Zombies",
+            start_x = SCREEN_WIDTH / 2,
+            start_y = STATS_HEIGHT * 3 / 4,
+            color = arcade.color.BLACK,
+            font_size = 30,
+            font_name = "Kenney Pixel Square",
+            anchor_x = "center",
+            anchor_y = "center"
+        )
+        self.stats_text = arcade.Text(
+            text = "",
+            start_x = SCREEN_WIDTH / 2,
+            start_y = STATS_HEIGHT / 4,
+            color = arcade.color.BLACK,
+            font_size = 5,
+            font_name = "Kenney Pixel Square",
+            anchor_x = "center",
+            anchor_y = "center"
+        )
 
     def setup(self):
         """
@@ -98,13 +139,14 @@ class ZombieSim(arcade.Window):
         prebuilt "house"
         """
         arcade.set_background_color(arcade.color.WHITE)
+        self.total_time = 0.0
         
         # Initialize Zombies
         zombies = []
         for i in range(NUM_ZOMBIES):
             zombies += [MovingSprite("images/cross.png", SCALING/20)]
             zombies[i].left = (i + 1) * SCREEN_WIDTH/(NUM_ZOMBIES+1)
-            zombies[i].top = SCREEN_HEIGHT*11/12
+            zombies[i].top = SCREEN_HEIGHT*11/12 + STATS_HEIGHT
             zombies[i].velocity = (random.random()*SPEED-SPEED/2, random.random()*SPEED-SPEED/2)
             self.zombies_list.append(zombies[i])
             self.moving_list.append(zombies[i])
@@ -115,12 +157,13 @@ class ZombieSim(arcade.Window):
         for i in range(NUM_HUMANS):
             humans += [MovingSprite("images/circleNoFill.png", SCALING/20)]
             humans[i].left = (i + 1) * SCREEN_WIDTH/(NUM_HUMANS+1)
-            humans[i].top = SCREEN_HEIGHT/12
+            humans[i].top = SCREEN_HEIGHT/12 + STATS_HEIGHT
             humans[i].velocity = (random.random()*SPEED-SPEED/2, random.random()*SPEED-SPEED/2)
             self.humans_list.append(humans[i])
             self.moving_list.append(humans[i])
             self.all_sprites.append(humans[i])
         
+
         # Initialize Walls
         walls = []
         # DEFAULT MAP
@@ -137,10 +180,10 @@ class ZombieSim(arcade.Window):
             for j in range(9):
                 flip = random.randint(0,WALL_GEN)
                 if not flip and j != 8:
-                    walls += [Wall("images/vert.png", SCALING/5, 50*i+200, 50*j+150)]
+                    walls += [Wall("images/vert.png", SCALING/5, 50*i+200, 50*j+150 + STATS_HEIGHT)]
                 flip = random.randint(0,WALL_GEN)
                 if not flip and i != 8:
-                    walls += [Wall("images/horiz.png", SCALING/5, 50*i+200, 50*j+100)]
+                    walls += [Wall("images/horiz.png", SCALING/5, 50*i+200, 50*j+100 + STATS_HEIGHT)]
         
         for wall in walls:
             self.walls_list.append(wall)
@@ -152,6 +195,29 @@ class ZombieSim(arcade.Window):
         collisions, infected turning into zombies, and wall/edge collisions
         Inputs: the time passed since the last update
         """
+
+        self.total_time += delta_time
+        minutes = int(self.total_time) // 60
+        seconds = int(self.total_time) % 60
+        centiss = int((self.total_time - minutes*60 - seconds)*100)
+        self.timer_text.text = f"{minutes:02d}:{seconds:02d}:{centiss:02d}"
+        self.score_text.text = f"{len(self.humans_list)+len(self.infected_list)} Humans vs. {len(self.zombies_list)} Zombies"
+        
+        self.stats_text.text = f"|  "
+        mcount = 0
+        for i in self.moving_list:
+            if i.get_texture() != "zombie":
+                mcount += 1
+                self.stats_text.text += f"Human {mcount}: "
+                if i.get_texture() == "infected":
+                    self.stats_text.text += f"Infected  |  "
+                else:
+                    self.stats_text.text += f"Healthy  |  "
+        self.stats_text.text += f"  |  "
+        mcount = 0
+        for i in self.zombies_list:
+            mcount += 1
+            self.stats_text.text += f"Zombie {mcount}: Zombified  |  "
 
         # Check for human-zombie collisions
         for human in self.humans_list:
@@ -188,7 +254,7 @@ class ZombieSim(arcade.Window):
                     else:
                         moving.top = struck_wall[0].bottom
 
-            if moving.bottom < 0:
+            if moving.bottom < STATS_HEIGHT:
                 moving.velocity = (oldvel[0],-oldvel[1])
             if moving.left < 0:
                 moving.velocity = (-oldvel[0],oldvel[1])
@@ -206,6 +272,10 @@ class ZombieSim(arcade.Window):
         """
         arcade.start_render()
         self.all_sprites.draw()
+        self.timer_text.draw()
+        self.score_text.draw()
+        self.stats_text.draw()
+        arcade.draw_line(0, STATS_HEIGHT, SCREEN_WIDTH, STATS_HEIGHT, arcade.color.BLACK, 3)
 
     def make_human(self, new_human):
         """
@@ -231,10 +301,10 @@ class ZombieSim(arcade.Window):
         self.infected_list.remove(new_zombie)
         new_zombie.become_zombie()
         self.zombies_list.append(new_zombie)  
-        if len(self.humans_list) == 0:
-            arcade.close_window()
+        # if len(self.humans_list) == 0:
+        #     arcade.close_window() #REPLACE THIS WITH GAME OVER
 
 if __name__ == "__main__":
-    app = ZombieSim(SCREEN_WIDTH,SCREEN_HEIGHT,SCREEN_TITLE)
+    app = ZombieSim(SCREEN_WIDTH,SCREEN_HEIGHT+STATS_HEIGHT,SCREEN_TITLE)
     app.setup()
     arcade.run()

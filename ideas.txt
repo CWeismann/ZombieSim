@@ -5,8 +5,15 @@
 -humans are infected for some amount of time before becoming zombies
 -fix wall trap glitch (LIKELY SOLVED)
 -random map generation
-timer that tracks game length
+-timer that tracks game length
+    text is a bit fuzzy
+end of game screen that shows game length stats?
+menu screen to select settings
 bottom of the screen reference for each movingSprite's stats
+    -Count of zombies and humans
+    How long they were human
+    Whether they are infected, human, or zombie
+make walls responsive to screen size changes
 line of sight
     zombies follow closest human in line of sight
     humans run from closest zombie in line of sight
