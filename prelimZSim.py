@@ -1,6 +1,7 @@
 from calendar import c
 import arcade
 import random
+import math
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -53,18 +54,21 @@ class MovingSprite(arcade.Sprite):
         self.infected_texture = arcade.load_texture("images/circleFill.png")
         self.zombie_texture = arcade.load_texture("images/cross.png")
 
-        self.human_time = 0
-        self.infection_time = 0
+        self.human_time = 0.0
+        self.infection_time = 0.0
 
         self.stat_text = arcade.Text(
             text = "",
             start_x = SCREEN_WIDTH / 2,
             start_y = STATS_HEIGHT / 4,
             color = arcade.color.BLACK,
-            font_size = 5,
-            font_name = "Kenney Pixel Square",
+            font_size = 7,
+            font_name = "monospace",
             anchor_x = "center",
-            anchor_y = "center"
+            anchor_y = "center",
+            multiline = True,
+            width = SCREEN_WIDTH / (NUM_HUMANS + NUM_ZOMBIES),
+            align = "center"
         )
 
     # Texture changes for role changes
@@ -79,7 +83,12 @@ class MovingSprite(arcade.Sprite):
     def get_infection_time(self):
         return self.infection_time
     def get_human_time(self):
-        return self.human_time
+        if self.human_time < 0.1:
+            return "N/A"
+        minutes = int(self.human_time) // 60
+        seconds = int(self.human_time) % 60
+        centiss = int((self.human_time - minutes*60 - seconds)*100)
+        return f"{minutes:02d}:{seconds:02d}.{centiss:02d}"
     def get_stat_text(self):
         return self.stat_text
     # Increases the amount of time that an infected has been infected
@@ -122,12 +131,12 @@ class ZombieSim(arcade.Window):
 
         self.total_time = 0.0
         self.timer_text = arcade.Text(
-            text = "00:00:00",
+            text = "00:00.00",
             start_x = SCREEN_WIDTH*14/15,
             start_y = SCREEN_HEIGHT*14/15 + STATS_HEIGHT,
             color = arcade.color.BLACK,
             font_size = 10,
-            font_name= "courier",
+            font_name= "monospace",
             anchor_x = "center"
         )
         self.score_text = arcade.Text(
@@ -140,16 +149,16 @@ class ZombieSim(arcade.Window):
             anchor_x = "center",
             anchor_y = "center"
         )
-        self.stats_text = arcade.Text(
-            text = "",
-            start_x = SCREEN_WIDTH / 2,
-            start_y = STATS_HEIGHT / 4,
-            color = arcade.color.BLACK,
-            font_size = 5,
-            font_name = "Kenney Pixel Square",
-            anchor_x = "center",
-            anchor_y = "center"
-        )
+        # self.stats_text = arcade.Text(
+        #     text = "",
+        #     start_x = SCREEN_WIDTH / 2,
+        #     start_y = STATS_HEIGHT / 4,
+        #     color = arcade.color.BLACK,
+        #     font_size = 5,
+        #     font_name = "courier",
+        #     anchor_x = "center",
+        #     anchor_y = "center"
+        # )
 
     def setup(self):
         """
@@ -219,7 +228,7 @@ class ZombieSim(arcade.Window):
         minutes = int(self.total_time) // 60
         seconds = int(self.total_time) % 60
         centiss = int((self.total_time - minutes*60 - seconds)*100)
-        self.timer_text.text = f"{minutes:02d}:{seconds:02d}:{centiss:02d}"
+        self.timer_text.text = f"{minutes:02d}:{seconds:02d}.{centiss:02d}"
         self.score_text.text = f"{len(self.humans_list)+len(self.infected_list)} Humans vs. {len(self.zombies_list)} Zombies"
         
         mcount = 0
@@ -233,8 +242,9 @@ class ZombieSim(arcade.Window):
             else:
                 status = f"Healthy"
             spacing = (mcount-0.5)*SCREEN_WIDTH/(NUM_HUMANS+NUM_ZOMBIES)
-            moving.set_stat_text(f"Person {mcount}:\n{status}", spacing)
-            print(spacing)
+            sprite_vel = moving.velocity
+            sprite_speed = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
+            moving.set_stat_text(f"Person {mcount}: {status}\nTime Survived: {moving.get_human_time()}\nSpeed: {sprite_speed:1.1f}", spacing)
 
         # self.stats_text.text = f"|"
         # mcount = 0
@@ -256,6 +266,7 @@ class ZombieSim(arcade.Window):
 
         # Check for human-zombie collisions
         for human in self.humans_list:
+            human.inc_human_time(delta_time)
             if human.collides_with_list(self.zombies_list):
                 self.make_infected(human)
 
@@ -309,7 +320,7 @@ class ZombieSim(arcade.Window):
         self.all_sprites.draw()
         self.timer_text.draw()
         self.score_text.draw()
-        self.stats_text.draw()
+        # self.stats_text.draw()
         for i in self.moving_list:
             i.get_stat_text().draw()
         arcade.draw_line(0, STATS_HEIGHT, SCREEN_WIDTH, STATS_HEIGHT, arcade.color.BLACK, 3)
