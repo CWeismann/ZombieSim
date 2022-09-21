@@ -206,11 +206,11 @@ class ZombieSim(arcade.Window):
         # RANDOM MAP
         for i in range(9):
             for j in range(9):
-                flip = random.randint(0,WALL_GEN)
-                if not flip and j != 8:
+                no_wall = random.randint(0,WALL_GEN)
+                if not no_wall and j != 8:
                     walls += [Wall("images/vert.png", SCALING/5, 50*i+200, 50*j+150 + STATS_HEIGHT)]
-                flip = random.randint(0,WALL_GEN)
-                if not flip and i != 8:
+                no_wall = random.randint(0,WALL_GEN)
+                if not no_wall and i != 8:
                     walls += [Wall("images/horiz.png", SCALING/5, 50*i+200, 50*j+100 + STATS_HEIGHT)]
         
         for wall in walls:

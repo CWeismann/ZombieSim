@@ -11,9 +11,10 @@ end of game screen that shows game length stats?
 menu screen to select settings
 bottom of the screen reference for each movingSprite's stats
     -Count of zombies and humans
-    How long they were human
-    Whether they are infected, human, or zombie
-make walls responsive to screen size changes
+    -How long they were human
+    -Whether they are infected, human, or zombie
+    -Sprite speed
+make wall layout responsive to screen size changes?
 line of sight
     zombies follow closest human in line of sight
     humans run from closest zombie in line of sight
