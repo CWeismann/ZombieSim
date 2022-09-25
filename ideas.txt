@@ -29,6 +29,7 @@ items
     knife: kills first zombie who hits human
     gun: might kill zombie in line of sight
     medpack: heals infected human
+    antidote: heals zombie
     bicycle: increase move speed while still human
     binoculars: improve sight range while human
     bullets: reloads gun

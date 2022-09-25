@@ -108,6 +108,16 @@ class MovingSprite(arcade.Sprite):
         else:
             return "zombie"
 
+class Item(arcade.Sprite):
+     def __init__(self, image, scale):
+        """
+        Initializes a new Item sprite
+        Inputs: the starting sprite image, and the scaling of the screen
+        """
+        super().__init__(image, scale)
+
+        self.knife_texture = arcade.load_texture("")
+
 class ZombieSim(arcade.Window):
     """
     The game itself
