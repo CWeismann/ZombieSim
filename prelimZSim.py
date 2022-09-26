@@ -76,6 +76,7 @@ class MovingSprite(arcade.Sprite):
             width = SCREEN_WIDTH / (NUM_HUMANS + NUM_ZOMBIES),
             align = "center"
         )
+        self.sprite_speed = 0
 
     # Texture changes for role changes
     def become_human(self):
@@ -127,6 +128,27 @@ class MovingSprite(arcade.Sprite):
                 self.antidotes -= 1
             elif name == "knife":
                 self.knives -= 1
+
+    # Gets the average distance and direction of zoms
+    def update_avg_z(self, game):
+        xcoords = []
+        ycoords = []
+        zom_close = False
+        for zom in game.zombies_list:
+            dist = arcade.get_distance_between_sprites(zom, self)
+            if dist <= 50: #TODO : make not magic num
+                zom_close = True
+                xcoords.append(zom.center_x) #TODO : make weighted average using distance
+                ycoords.append(zom.center_y)
+        if zom_close:
+            x_avg = sum(xcoords)/len(xcoords)
+            y_avg = sum(ycoords)/len(ycoords)
+            
+            vect = (x_avg - self.center_x, y_avg - self.center_y)
+            vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
+            move_vect = -vect[0]/(vect_len), -vect[1]/(vect_len)
+            print(move_vect)
+            return move_vect
 
 
     # Returns the current texture of the sprite
@@ -336,8 +358,8 @@ class ZombieSim(arcade.Window):
 
             spacing = (mcount-0.5)*SCREEN_WIDTH/(NUM_HUMANS+NUM_ZOMBIES)
             sprite_vel = moving.velocity
-            sprite_speed = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
-            moving.set_stat_text(f"Person {mcount}: {status}\nTime Survived: {moving.get_human_time()}\nSpeed: {sprite_speed:1.1f}\nItems: {items}", spacing)
+            moving.sprite_speed = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
+            moving.set_stat_text(f"Person {mcount}: {status}\nTime Survived: {moving.get_human_time()}\nSpeed: {moving.sprite_speed:1.1f}\nItems: {items}", spacing)
 
         # self.stats_text.text = f"|"
         # mcount = 0
@@ -357,10 +379,10 @@ class ZombieSim(arcade.Window):
         #     mcount += 1
         #     self.stats_text.text += f"Zombie {mcount}: Zombified  |  "
 
-        # Check for human-zombie collisions
+        
         for human in self.humans_list:
             human.inc_human_time(delta_time)
-            zombies = human.collides_with_list(self.zombies_list)
+            zombies = human.collides_with_list(self.zombies_list) # Check for human-zombie collisions
             used_items = []
             for zombie in zombies:
                 if human.has_item("antidote"):
@@ -416,7 +438,15 @@ class ZombieSim(arcade.Window):
                 moving.velocity = (oldvel[0],-oldvel[1])
             if moving.right > self.width:
                 moving.velocity = (-oldvel[0],oldvel[1])
-        
+
+            if moving in self.humans_list:
+                move_vector = None
+                move_vector = moving.update_avg_z(self) # Update move vector
+
+                if move_vector:
+                    moving.velocity = move_vector[0]*moving.sprite_speed*SPEED-SPEED/2, move_vector[1]*moving.sprite_speed*SPEED-SPEED/2
+                    
+
         self.all_sprites.update()
 
 
@@ -482,6 +512,11 @@ class ZombieSim(arcade.Window):
         self.all_sprites.remove(item)
 
 if __name__ == "__main__":
+    app = ZombieSim(SCREEN_WIDTH,SCREEN_HEIGHT+STATS_HEIGHT,SCREEN_TITLE)
+    app.setup()
+    arcade.run()
+
+def controlled_run(game, num_runs):
     app = ZombieSim(SCREEN_WIDTH,SCREEN_HEIGHT+STATS_HEIGHT,SCREEN_TITLE)
     app.setup()
     arcade.run()
