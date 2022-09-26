@@ -26,10 +26,10 @@ better map generation
 human/zombie pathfinding- when not seeing other team, navigate walls more carefully
 infected can infect humans but humans won't run from them?
 items
-    knife: kills first zombie who hits human
+    -knife: kills first zombie who hits human
     gun: might kill zombie in line of sight
     medpack: heals infected human
-    antidote: heals zombie
+    -antidote: turns zombie back into human
     bicycle: increase move speed while still human
     binoculars: improve sight range while human
     bullets: reloads gun
@@ -37,7 +37,12 @@ items
     dog: attacks closest zombie, but might become one too
     disguise: zombies will not approach
     scanner: can recognize infected
+make infected use items
+loot corpses
+corpses traansform into zombies
 zombies can break down doors
+items appear over time?
+limited inventory space?
 multiple zombie types
 multiple human strategies
 human collaboration/enmity?

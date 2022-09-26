@@ -13,7 +13,8 @@ NUM_ZOMBIES = 2
 NUM_HUMANS = 5
 INCUBATION_PERIOD = 10.0 # seconds
 SPEED = 3.0
-WALL_GEN = 2 # larger value = more walls
+WALL_GEN = 2 # larger value = fewer walls; SUGGESTED: 2
+ITEM_GEN = 10 # larger value = fewer items; SUGGESTED: 10
 
 WALL_LENGTH = SCALING * 25 # May be inaccurate - testing needed
 
@@ -28,6 +29,7 @@ class Wall(arcade.Sprite):
         super().__init__(image, scale)
         self.left = left
         self.top = top
+
         self.vert_texture = arcade.load_texture("images/vert.png")
         self.horiz_texture = arcade.load_texture("images/horiz.png")
         if image == "images/vert.png":
@@ -53,14 +55,18 @@ class MovingSprite(arcade.Sprite):
         self.human_texture = arcade.load_texture("images/circleNoFill.png")
         self.infected_texture = arcade.load_texture("images/circleFill.png")
         self.zombie_texture = arcade.load_texture("images/cross.png")
+        self.dead_texture = arcade.load_texture("images/circleCrossedOut.png")
 
         self.human_time = 0.0
         self.infection_time = 0.0
 
+        self.antidotes = 0
+        self.knives = 0
+
         self.stat_text = arcade.Text(
             text = "",
             start_x = SCREEN_WIDTH / 2,
-            start_y = STATS_HEIGHT / 4,
+            start_y = STATS_HEIGHT * 3 / 7,
             color = arcade.color.BLACK,
             font_size = 7,
             font_name = "monospace",
@@ -78,6 +84,9 @@ class MovingSprite(arcade.Sprite):
         self.texture = self.infected_texture
     def become_zombie(self):
         self.texture = self.zombie_texture
+    def become_dead(self):
+        self.velocity = (0,0)
+        self.texture = self.dead_texture
 
     # Returns the amount of time that an infected has been infected
     def get_infection_time(self):
@@ -99,26 +108,70 @@ class MovingSprite(arcade.Sprite):
     def set_stat_text(self, new_text, new_spacing):
         self.stat_text.text = new_text
         self.stat_text.x = new_spacing
+
+    def gain_item(self, item):
+        if item.get_texture() == "antidote":
+            self.antidotes += 1
+        elif item.get_texture() == "knife":
+            self.knives += 1
+
+    def has_item(self, name):
+        if name == "antidote" and self.antidotes:
+            return True
+        elif name == "knife" and self.knives:
+            return True
+
+    def use_items(self, names):
+        for name in names:
+            if name == "antidote":
+                self.antidotes -= 1
+            elif name == "knife":
+                self.knives -= 1
+
+
     # Returns the current texture of the sprite
     def get_texture(self):
         if self.texture == self.human_texture:
             return "human"
         elif self.texture == self.infected_texture:
             return "infected"
-        else:
+        elif self.texture == self.zombie_texture:
             return "zombie"
+        elif self.texture == self.dead_texture:
+            return "dead"
 
 class Item(arcade.Sprite):
-     def __init__(self, image, scale):
+    def __init__(self, image, scale, x, y):
         """
         Initializes a new Item sprite
         Inputs: the starting sprite image, and the scaling of the screen
         """
         super().__init__(image, scale)
 
-        self.antidote_texture = arcade.load_texture("antidote.png")
-        self.bicycle_texture = arcade.load_texture("bicycle.png")
-        self.knife_texture = arcade.load_texture("knife.png")
+        self.center_x = x
+        self.center_y = y
+
+        self.antidote_texture = arcade.load_texture("images/antidote.png")
+        self.bicycle_texture = arcade.load_texture("images/bicycle.png")
+        self.binoculars_texture = arcade.load_texture("images/binoculars.png")
+        self.bicycle_texture = arcade.load_texture("images/bullets.png")
+        self.disguise_texture = arcade.load_texture("images/disguise.png")
+        self.dog_texture = arcade.load_texture("images/dog.png")
+        self.gun_texture = arcade.load_texture("images/gun.png")
+        self.key_texture = arcade.load_texture("images/key.png")
+        self.knife_texture = arcade.load_texture("images/knife.png")
+        self.medpack_texture = arcade.load_texture("images/medpack.png")
+        self.scanner_texture = arcade.load_texture("images/scanner.png")
+
+    # Returns the current texture of the sprite
+    def get_texture(self):
+        if self.texture == self.antidote_texture:
+            return "antidote"
+        elif self.texture == self.knife_texture:
+            return "knife"
+        else:
+            return "other"
+
 
 class ZombieSim(arcade.Window):
     """
@@ -139,8 +192,13 @@ class ZombieSim(arcade.Window):
 
         self.walls_list = arcade.SpriteList()
 
+        self.antidotes_list = arcade.SpriteList()
+        self.knives_list = arcade.SpriteList()
+        self.items_list = arcade.SpriteList()
+
         self.all_sprites = arcade.SpriteList()
 
+        # Set up Timer
         self.total_time = 0.0
         self.timer_text = arcade.Text(
             text = "00:00.00",
@@ -151,12 +209,13 @@ class ZombieSim(arcade.Window):
             font_name= "monospace",
             anchor_x = "center"
         )
+        # Set up score
         self.score_text = arcade.Text(
             text = f"{NUM_HUMANS} Humans vs. {NUM_ZOMBIES} Zombies",
             start_x = SCREEN_WIDTH / 2,
-            start_y = STATS_HEIGHT * 3 / 4,
+            start_y = STATS_HEIGHT * 6 / 7,
             color = arcade.color.BLACK,
-            font_size = 30,
+            font_size = 20,
             font_name = "Kenney Pixel Square",
             anchor_x = "center",
             anchor_y = "center"
@@ -203,10 +262,10 @@ class ZombieSim(arcade.Window):
             self.moving_list.append(humans[i])
             self.all_sprites.append(humans[i])
         
-
         # Initialize Walls
         walls = []
-        # DEFAULT MAP
+        items = []
+        # DEFAULT MAP WITHOUT ITEMS
         # for i in range(8):
         #     if i == 3 or i == 4:
         #         continue
@@ -215,19 +274,33 @@ class ZombieSim(arcade.Window):
         #     walls += [Wall("images/horiz.png", SCALING/5, 50*i+200, 100)]
         #     walls += [Wall("images/horiz.png", SCALING/5, 50*i+200, 500)]
 
-        # RANDOM MAP
+        # RANDOM MAP WITH ITEMS
         for i in range(9):
             for j in range(9):
-                no_wall = random.randint(0,WALL_GEN)
+                no_wall = random.randint(0, WALL_GEN)
                 if not no_wall and j != 8:
                     walls += [Wall("images/vert.png", SCALING/5, 50*i+200, 50*j+150 + STATS_HEIGHT)]
-                no_wall = random.randint(0,WALL_GEN)
+                no_wall = random.randint(0, WALL_GEN)
                 if not no_wall and i != 8:
                     walls += [Wall("images/horiz.png", SCALING/5, 50*i+200, 50*j+100 + STATS_HEIGHT)]
+                no_item = random.randint(0, ITEM_GEN)
+                if not no_item and i != 8 and j != 8:
+                    item_type = random.randint(0,1)
+                    if item_type == 0:
+                        item = Item("images/knife.png", SCALING/20, 50*i+225, 50*j+125 + STATS_HEIGHT)
+                        self.items_list.append(item)
+                    elif item_type == 1:
+                        item = Item("images/antidote.png", SCALING/20, 50*i+225, 50*j+125 + STATS_HEIGHT)
+                        self.items_list.append(item)
+                    self.all_sprites.append(item)
+                    items += [item]
+                    
         
         for wall in walls:
             self.walls_list.append(wall)
             self.all_sprites.append(wall)
+
+        
 
     def on_update(self, delta_time: float = 1/60):
         """
@@ -251,12 +324,20 @@ class ZombieSim(arcade.Window):
                 status = f"Zombified"
             elif moving.get_texture() == "infected":
                 status = f"Infected"
-            else:
+            elif moving.get_texture() == "human":
                 status = f"Healthy"
+            elif moving.get_texture() == "dead":
+                status = f"Dead"
+            items = ""
+            if moving.has_item("antidote"):
+                items += "A"
+            if moving.has_item("knife"):
+                items += "K"
+
             spacing = (mcount-0.5)*SCREEN_WIDTH/(NUM_HUMANS+NUM_ZOMBIES)
             sprite_vel = moving.velocity
             sprite_speed = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
-            moving.set_stat_text(f"Person {mcount}: {status}\nTime Survived: {moving.get_human_time()}\nSpeed: {sprite_speed:1.1f}", spacing)
+            moving.set_stat_text(f"Person {mcount}: {status}\nTime Survived: {moving.get_human_time()}\nSpeed: {sprite_speed:1.1f}\nItems: {items}", spacing)
 
         # self.stats_text.text = f"|"
         # mcount = 0
@@ -279,8 +360,23 @@ class ZombieSim(arcade.Window):
         # Check for human-zombie collisions
         for human in self.humans_list:
             human.inc_human_time(delta_time)
-            if human.collides_with_list(self.zombies_list):
-                self.make_infected(human)
+            zombies = human.collides_with_list(self.zombies_list)
+            used_items = []
+            for zombie in zombies:
+                if human.has_item("antidote"):
+                    self.make_human(zombie)
+                    used_items += ["antidote"]
+                elif human.has_item("knife"):
+                    self.kill(zombie)
+                    used_items += ["knife"]
+                else:
+                    self.make_infected(human)
+                human.use_items(used_items)
+            items = human.collides_with_list(self.items_list)
+            for item in items:
+                if item:
+                    human.gain_item(item)
+                    self.remove_item(item)
 
         # Check if any infected should become a zombie    
         for infected in self.infected_list:
@@ -336,17 +432,19 @@ class ZombieSim(arcade.Window):
         for i in self.moving_list:
             i.get_stat_text().draw()
         arcade.draw_line(0, STATS_HEIGHT, SCREEN_WIDTH, STATS_HEIGHT, arcade.color.BLACK, 3)
-        arcade.draw_line(0, STATS_HEIGHT/2, SCREEN_WIDTH, STATS_HEIGHT/2, arcade.color.BLACK, 3)
+        arcade.draw_line(0, STATS_HEIGHT*2/3, SCREEN_WIDTH, STATS_HEIGHT*2/3, arcade.color.BLACK, 3)
         for i in range(NUM_HUMANS+NUM_ZOMBIES-1):
             xco = (i+1)/(NUM_HUMANS+NUM_ZOMBIES)*SCREEN_WIDTH
-            arcade.draw_line(xco, 0, xco, STATS_HEIGHT/2, arcade.color.BLACK, 3)
+            arcade.draw_line(xco, 0, xco, STATS_HEIGHT*2/3, arcade.color.BLACK, 3)
 
     def make_human(self, new_human):
         """
         Makes a zombie into a human - TO BE IMPLEMENTED?
         Inputs: the sprite to be changed
         """
-        pass
+        self.zombies_list.remove(new_human)
+        new_human.become_human()
+        self.humans_list.append(new_human)
 
     def make_infected(self, new_infected):
         """
@@ -367,6 +465,21 @@ class ZombieSim(arcade.Window):
         self.zombies_list.append(new_zombie)  
         # if len(self.humans_list) == 0:
         #     arcade.close_window() #REPLACE THIS WITH GAME OVER
+
+    def kill(self, killed):
+        if killed in self.humans_list:
+            self.humans_list.remove(killed)
+        if killed in self.infected_list:
+            self.infected_list.remove(killed)
+        if killed in self.zombies_list:
+            self.zombies_list.remove(killed)
+        killed.become_dead()
+        # self.moving_list.remove(killed)
+        #self.all_sprites.remove(killed)
+
+    def remove_item(self, item):
+        self.items_list.remove(item)
+        self.all_sprites.remove(item)
 
 if __name__ == "__main__":
     app = ZombieSim(SCREEN_WIDTH,SCREEN_HEIGHT+STATS_HEIGHT,SCREEN_TITLE)
