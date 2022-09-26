@@ -116,7 +116,9 @@ class Item(arcade.Sprite):
         """
         super().__init__(image, scale)
 
-        self.knife_texture = arcade.load_texture("")
+        self.antidote_texture = arcade.load_texture("antidote.png")
+        self.bicycle_texture = arcade.load_texture("bicycle.png")
+        self.knife_texture = arcade.load_texture("knife.png")
 
 class ZombieSim(arcade.Window):
     """
