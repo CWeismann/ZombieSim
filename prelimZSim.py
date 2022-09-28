@@ -14,6 +14,7 @@ NUM_HUMANS = 5
 INCUBATION_PERIOD = 10.0 # seconds
 SPEED = 3.0
 WALL_GEN = 2 # larger value = fewer walls; SUGGESTED: 2
+DOOR_GEN = 10 # larger value = fewer doors; SUGGESTED: 10?
 ITEM_GEN = 10 # larger value = fewer items; SUGGESTED: 10
 
 WALL_LENGTH = SCALING * 25 # May be inaccurate - testing needed
@@ -32,16 +33,26 @@ class Wall(arcade.Sprite):
 
         self.vert_texture = arcade.load_texture("images/vert.png")
         self.horiz_texture = arcade.load_texture("images/horiz.png")
+        self.vert_door_texture = arcade.load_texture("images/dashVert.png")
+        self.horiz_door_texture = arcade.load_texture("images/dashHoriz.png")
         if image == "images/vert.png":
             self.texture = self.vert_texture
-        else:
+        elif image == "images/horiz.png":
             self.texture = self.horiz_texture
+        elif image == "images/dashVert.png":
+            self.texture = self.vert_door_texture
+        elif image == "images/dashHoriz.png":
+            self.texture = self.horiz_door_texture
 
     def get_texture(self):
         if self.texture == self.vert_texture:
             return "vert"
-        else:
+        elif self.texture == self.horiz_texture:
             return "horiz"
+        elif self.texture == self.vert_door_texture:
+            return "vert_door"
+        elif self.texture == self.horiz_door_texture:
+            return "horiz_door"
 
 
 class MovingSprite(arcade.Sprite):
@@ -287,6 +298,7 @@ class ZombieSim(arcade.Window):
         # Initialize Walls
         walls = []
         items = []
+        doors = []
         # DEFAULT MAP WITHOUT ITEMS
         # for i in range(8):
         #     if i == 3 or i == 4:
@@ -300,11 +312,19 @@ class ZombieSim(arcade.Window):
         for i in range(9):
             for j in range(9):
                 no_wall = random.randint(0, WALL_GEN)
+                no_door = random.randint(0, DOOR_GEN)
                 if not no_wall and j != 8:
-                    walls += [Wall("images/vert.png", SCALING/5, 50*i+200, 50*j+150 + STATS_HEIGHT)]
+                    if not no_door:
+                        walls += [Wall("images/dashVert.png", SCALING/50, 50*i+200, 50*j+150 + STATS_HEIGHT)]
+                    else:
+                        walls += [Wall("images/vert.png", SCALING/5, 50*i+200, 50*j+150 + STATS_HEIGHT)]
                 no_wall = random.randint(0, WALL_GEN)
+                no_door = random.randint(0, DOOR_GEN)
                 if not no_wall and i != 8:
-                    walls += [Wall("images/horiz.png", SCALING/5, 50*i+200, 50*j+100 + STATS_HEIGHT)]
+                    if not no_door:
+                        walls += [Wall("images/dashHoriz.png", SCALING/5, 50*i+200, 50*j+100 + STATS_HEIGHT)]
+                    else:
+                        walls += [Wall("images/horiz.png", SCALING/5, 50*i+200, 50*j+100 + STATS_HEIGHT)]
                 no_item = random.randint(0, ITEM_GEN)
                 if not no_item and i != 8 and j != 8:
                     item_type = random.randint(0,1)
@@ -417,13 +437,14 @@ class ZombieSim(arcade.Window):
             # Might be less of a problem when intelligent agents are introduced.
             struck_wall = moving.collides_with_list(self.walls_list)
             if struck_wall:
-                if struck_wall[0].get_texture() == "vert":
+                wall_tex = struck_wall[0].get_texture()
+                if wall_tex == "vert" or (moving.get_texture() == "zombie" and wall_tex == "vert_door"):
                     moving.velocity = (-oldvel[0],oldvel[1])
                     if oldvel[0] < 0:
                         moving.left = struck_wall[0].right
                     else:
                         moving.right = struck_wall[0].left
-                else:         
+                elif wall_tex == "horiz" or (moving.get_texture() == "zombie" and wall_tex == "horiz_door"):         
                     moving.velocity = (oldvel[0],-oldvel[1]) 
                     if oldvel[1] < 0:
                         moving.bottom = struck_wall[0].top
