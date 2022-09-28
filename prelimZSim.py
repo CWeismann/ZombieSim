@@ -158,7 +158,6 @@ class MovingSprite(arcade.Sprite):
             vect = (x_avg - self.center_x, y_avg - self.center_y)
             vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
             move_vect = -vect[0]/(vect_len), -vect[1]/(vect_len)
-            print(move_vect)
             return move_vect
 
 
@@ -464,9 +463,10 @@ class ZombieSim(arcade.Window):
                 move_vector = None
                 move_vector = moving.update_avg_z(self) # Update move vector
 
-                if move_vector:
-                    moving.velocity = move_vector[0]*moving.sprite_speed*SPEED-SPEED/2, move_vector[1]*moving.sprite_speed*SPEED-SPEED/2
-                    
+                if move_vector: # if their move vector exists, update their velocity. For now, they just run away.
+                    moving.velocity = (move_vector[0]*SPEED-SPEED/2), (move_vector[1]*SPEED-SPEED/2)
+                    v_len = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
+                    moving.velocity = (moving.velocity[0]/v_len)*moving.sprite_speed, (moving.velocity[1]/v_len)*moving.sprite_speed
 
         self.all_sprites.update()
 
