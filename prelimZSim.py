@@ -147,7 +147,7 @@ class MovingSprite(arcade.Sprite):
         zom_close = False
         for zom in game.zombies_list:
             dist = arcade.get_distance_between_sprites(zom, self)
-            if dist <= 50: #TODO : make not magic num
+            if dist <= 100: #TODO : make not magic num
                 zom_close = True
                 xcoords.append(zom.center_x) #TODO : make weighted average using distance
                 ycoords.append(zom.center_y)
