@@ -17,8 +17,8 @@ menu screen to select settings
 make wall layout responsive to screen size changes?
 line of sight
     zombies follow closest human in line of sight
-    humans run from closest zombie in line of sight
-    walls block line of sight
+    -humans run from closest zombie in line of sight
+    walls block line of sight CURRENTLY NO
 implement doors that can be opened by humans but not zombies
 random starting positions
 better map generation
