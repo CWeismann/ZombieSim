@@ -11,7 +11,11 @@ SCALING = 2.0
 
 NUM_ZOMBIES = 2
 NUM_HUMANS = 5
+
 INCUBATION_PERIOD = 10.0 # seconds
+HUMAN_VISION = 100
+ZOMBIE_VISION = 200
+
 SPEED = 3.0
 WALL_GEN = 2 # larger value = fewer walls; SUGGESTED: 2
 DOOR_GEN = 10 # larger value = fewer doors; SUGGESTED: 10?
@@ -115,6 +119,8 @@ class MovingSprite(arcade.Sprite):
     # Increases the amount of time that an infected has been infected
     def inc_infection_time(self, dt):
         self.infection_time += dt
+    def reset_infection_time(self):
+        self.infection_time = 0
     def inc_human_time(self, dt):
         self.human_time += dt
     def set_stat_text(self, new_text, new_spacing):
@@ -140,14 +146,34 @@ class MovingSprite(arcade.Sprite):
             elif name == "knife":
                 self.knives -= 1
 
+    # DEPRECATED - SEE update_LoS_to_avg_z
     # Gets the average distance and direction of zoms
-    def update_avg_z(self, game):
+    # def update_avg_z(self, game):
+    #     xcoords = []
+    #     ycoords = []
+    #     zom_close = False
+    #     for zom in game.zombies_list:
+    #         dist = arcade.get_distance_between_sprites(zom, self)
+    #         if dist <= 100: #TODO : make not magic num
+    #             zom_close = True
+    #             xcoords.append(zom.center_x) #TODO : make weighted average using distance
+    #             ycoords.append(zom.center_y)
+    #     if zom_close:
+    #         x_avg = sum(xcoords)/len(xcoords)
+    #         y_avg = sum(ycoords)/len(ycoords)
+            
+    #         vect = (x_avg - self.center_x, y_avg - self.center_y)
+    #         vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
+    #         move_vect = -vect[0]/(vect_len), -vect[1]/(vect_len)
+    #         return move_vect
+
+    # line-of-sight-based alternative to update_avg_z
+    def update_LoS_to_avg_z(self, game):
         xcoords = []
         ycoords = []
         zom_close = False
         for zom in game.zombies_list:
-            dist = arcade.get_distance_between_sprites(zom, self)
-            if dist <= 100: #TODO : make not magic num
+            if arcade.has_line_of_sight(self.position, zom.position, game.walls_list, HUMAN_VISION, 2):
                 zom_close = True
                 xcoords.append(zom.center_x) #TODO : make weighted average using distance
                 ycoords.append(zom.center_y)
@@ -158,6 +184,18 @@ class MovingSprite(arcade.Sprite):
             vect = (x_avg - self.center_x, y_avg - self.center_y)
             vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
             move_vect = -vect[0]/(vect_len), -vect[1]/(vect_len)
+            return move_vect
+
+    def update_LoS_to_h(self, game):
+        visible_hums = arcade.SpriteList()
+        for hum in game.humans_list:
+            if arcade.has_line_of_sight(self.position, hum.position, game.walls_list, ZOMBIE_VISION, 2):
+                visible_hums.append(hum)
+        if visible_hums:
+            nearest_hum, dist_to_nh = arcade.get_closest_sprite(self, visible_hums)
+            vect = (nearest_hum.center_x - self.center_x, nearest_hum.center_y - self.center_y)
+            vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
+            move_vect = vect[0]/(vect_len), vect[1]/(vect_len)
             return move_vect
 
 
@@ -452,25 +490,45 @@ class ZombieSim(arcade.Window):
             hit_edge = False
             if moving.bottom < STATS_HEIGHT:
                 moving.velocity = (oldvel[0],-oldvel[1])
+                moving.bottom = STATS_HEIGHT
                 hit_edge = True
             if moving.left < 0:
                 moving.velocity = (-oldvel[0],oldvel[1])
+                moving.left = 0
                 hit_edge = True
             if moving.top > self.height:
                 moving.velocity = (oldvel[0],-oldvel[1])
+                moving.top = self.height
                 hit_edge = True
             if moving.right > self.width:
                 moving.velocity = (-oldvel[0],oldvel[1])
+                moving.right = self.width
                 hit_edge = True
 
-            if moving in self.humans_list:
+            if moving in self.humans_list or moving in self.infected_list:
                 move_vector = None
-                move_vector = moving.update_avg_z(self) # Update move vector
+                move_vector = moving.update_LoS_to_avg_z(self) # Update move vector
 
                 if move_vector and not struck_wall and not hit_edge: # if their move vector exists, update their velocity. For now, they just run away.
                     moving.velocity = (move_vector[0]*SPEED-SPEED/2), (move_vector[1]*SPEED-SPEED/2)
                     v_len = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
                     moving.velocity = (moving.velocity[0]/v_len)*moving.sprite_speed, (moving.velocity[1]/v_len)*moving.sprite_speed
+
+            if moving in self.zombies_list:
+                move_vector = moving.update_LoS_to_h(self)
+                if move_vector and not struck_wall and not hit_edge:
+                    moving.velocity = (move_vector[0]*SPEED-SPEED/2), (move_vector[1]*SPEED-SPEED/2)
+                    v_len = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
+                    moving.velocity = (moving.velocity[0]/v_len)*moving.sprite_speed, (moving.velocity[1]/v_len)*moving.sprite_speed
+
+
+                # if self.humans_list:
+                #     nearest_human, dist_to_nh = arcade.get_closest_sprite(moving, self.humans_list)
+                #     move_vector = (nearest_human.position[0]-moving.position[0], nearest_human.position[1]-moving.position[1])
+                #     if move_vector and not struck_wall and not hit_edge: # if their move vector exists, update their velocity. For now, they just run away.
+                #         moving.velocity = (move_vector[0]*SPEED-SPEED/2), (move_vector[1]*SPEED-SPEED/2)
+                #         v_len = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
+                #         moving.velocity = (moving.velocity[0]/v_len)*moving.sprite_speed, (moving.velocity[1]/v_len)*moving.sprite_speed
 
         self.all_sprites.update()
 
@@ -499,6 +557,7 @@ class ZombieSim(arcade.Window):
         """
         self.zombies_list.remove(new_human)
         new_human.become_human()
+        new_human.reset_infection_time()
         self.humans_list.append(new_human)
 
     def make_infected(self, new_infected):
