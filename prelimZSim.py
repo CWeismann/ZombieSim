@@ -222,7 +222,7 @@ class ZombieSim(arcade.Window):
         self.humans_list = arcade.SpriteList()
         self.moving_list = arcade.SpriteList()
 
-        self.walls_list = arcade.SpriteList()
+        self.walls_list = arcade.SpriteList(use_spatial_hash=True)
 
         self.antidotes_list = arcade.SpriteList()
         self.knives_list = arcade.SpriteList()
@@ -449,21 +449,25 @@ class ZombieSim(arcade.Window):
                         moving.bottom = struck_wall[0].top
                     else:
                         moving.top = struck_wall[0].bottom
-
+            hit_edge = False
             if moving.bottom < STATS_HEIGHT:
                 moving.velocity = (oldvel[0],-oldvel[1])
+                hit_edge = True
             if moving.left < 0:
                 moving.velocity = (-oldvel[0],oldvel[1])
+                hit_edge = True
             if moving.top > self.height:
                 moving.velocity = (oldvel[0],-oldvel[1])
+                hit_edge = True
             if moving.right > self.width:
                 moving.velocity = (-oldvel[0],oldvel[1])
+                hit_edge = True
 
             if moving in self.humans_list:
                 move_vector = None
                 move_vector = moving.update_avg_z(self) # Update move vector
 
-                if move_vector: # if their move vector exists, update their velocity. For now, they just run away.
+                if move_vector and not struck_wall and not hit_edge: # if their move vector exists, update their velocity. For now, they just run away.
                     moving.velocity = (move_vector[0]*SPEED-SPEED/2), (move_vector[1]*SPEED-SPEED/2)
                     v_len = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
                     moving.velocity = (moving.velocity[0]/v_len)*moving.sprite_speed, (moving.velocity[1]/v_len)*moving.sprite_speed
