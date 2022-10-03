@@ -16,10 +16,11 @@ menu screen to select settings
     -Sprite speed
 make wall layout responsive to screen size changes?
 line of sight
-    zombies follow closest human in line of sight
-    humans run from closest zombie in line of sight
-    walls block line of sight
-implement doors that can be opened by humans but not zombies
+    -zombies follow closest human in line of sight
+    -humans run from closest zombie in line of sight
+    -walls block line of sight
+-implement doors that can be opened by humans but not zombies
+speed minimums
 random starting positions
 better map generation
     -editable map generation constant
@@ -33,7 +34,7 @@ items
     bicycle: increase move speed while still human
     binoculars: improve sight range while human
     bullets: reloads gun
-    key: can lock doors against other humans
+    -key: can lock doors against other humans
     dog: attacks closest zombie, but might become one too
     disguise: zombies will not approach
     scanner: can recognize infected

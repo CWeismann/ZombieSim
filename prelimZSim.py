@@ -9,12 +9,17 @@ STATS_HEIGHT = 100
 SCREEN_TITLE = "Zombie Sim"
 SCALING = 2.0
 
-NUM_ZOMBIES = 2
-NUM_HUMANS = 5
+NUM_ZOMBIES = 2 # SUGGESTED 2
+NUM_HUMANS = 5 # SUGGESTED: 5
+
 INCUBATION_PERIOD = 10.0 # seconds
+HUMAN_VISION = 100
+ZOMBIE_VISION = 200
+
+MAX_SPEED = 3
 SPEED = 3.0
 WALL_GEN = 2 # larger value = fewer walls; SUGGESTED: 2
-DOOR_GEN = 10 # larger value = fewer doors; SUGGESTED: 10?
+DOOR_GEN = 10 # larger value = fewer doors; SUGGESTED: 10
 ITEM_GEN = 10 # larger value = fewer items; SUGGESTED: 10
 
 WALL_LENGTH = SCALING * 25 # May be inaccurate - testing needed
@@ -54,6 +59,12 @@ class Wall(arcade.Sprite):
         elif self.texture == self.horiz_door_texture:
             return "horiz_door"
 
+    def lock_door(self):
+        if self.get_texture() == "vert_door":
+            self.texture = self.vert_texture
+        elif self.get_texture() == "horiz_door":
+            self.texture = self.horiz_texture
+
 
 class MovingSprite(arcade.Sprite):
     def __init__(self, image, scale):
@@ -72,6 +83,7 @@ class MovingSprite(arcade.Sprite):
         self.infection_time = 0.0
 
         self.antidotes = 0
+        self.keys = 0
         self.knives = 0
 
         self.stat_text = arcade.Text(
@@ -115,6 +127,8 @@ class MovingSprite(arcade.Sprite):
     # Increases the amount of time that an infected has been infected
     def inc_infection_time(self, dt):
         self.infection_time += dt
+    def reset_infection_time(self):
+        self.infection_time = 0
     def inc_human_time(self, dt):
         self.human_time += dt
     def set_stat_text(self, new_text, new_spacing):
@@ -124,30 +138,57 @@ class MovingSprite(arcade.Sprite):
     def gain_item(self, item):
         if item.get_texture() == "antidote":
             self.antidotes += 1
+        elif item.get_texture() == "key":
+            self.keys += 1
         elif item.get_texture() == "knife":
             self.knives += 1
-
+        
     def has_item(self, name):
         if name == "antidote" and self.antidotes:
             return True
+        elif name == "key" and self.keys:
+            return True
         elif name == "knife" and self.knives:
             return True
+
 
     def use_items(self, names):
         for name in names:
             if name == "antidote":
                 self.antidotes -= 1
+            elif name == "key":
+                self.keys -= 1
             elif name == "knife":
                 self.knives -= 1
 
+    # DEPRECATED - SEE update_LoS_to_avg_z
     # Gets the average distance and direction of zoms
-    def update_avg_z(self, game):
+    # def update_avg_z(self, game):
+    #     xcoords = []
+    #     ycoords = []
+    #     zom_close = False
+    #     for zom in game.zombies_list:
+    #         dist = arcade.get_distance_between_sprites(zom, self)
+    #         if dist <= 100: #TODO : make not magic num
+    #             zom_close = True
+    #             xcoords.append(zom.center_x) #TODO : make weighted average using distance
+    #             ycoords.append(zom.center_y)
+    #     if zom_close:
+    #         x_avg = sum(xcoords)/len(xcoords)
+    #         y_avg = sum(ycoords)/len(ycoords)
+            
+    #         vect = (x_avg - self.center_x, y_avg - self.center_y)
+    #         vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
+    #         move_vect = -vect[0]/(vect_len), -vect[1]/(vect_len)
+    #         return move_vect
+
+    # line-of-sight-based alternative to update_avg_z
+    def update_LoS_to_avg_z(self, game):
         xcoords = []
         ycoords = []
         zom_close = False
         for zom in game.zombies_list:
-            dist = arcade.get_distance_between_sprites(zom, self)
-            if dist <= 100: #TODO : make not magic num
+            if arcade.has_line_of_sight(self.position, zom.position, game.walls_list, HUMAN_VISION, 2):
                 zom_close = True
                 xcoords.append(zom.center_x) #TODO : make weighted average using distance
                 ycoords.append(zom.center_y)
@@ -157,7 +198,22 @@ class MovingSprite(arcade.Sprite):
             
             vect = (x_avg - self.center_x, y_avg - self.center_y)
             vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
-            move_vect = -vect[0]/(vect_len), -vect[1]/(vect_len)
+            if self.has_item("knife") or self.has_item("antidote"):
+                move_vect = vect[0]/(vect_len), vect[1]/(vect_len)
+            else:
+                move_vect = -vect[0]/(vect_len), -vect[1]/(vect_len)
+            return move_vect
+
+    def update_LoS_to_h(self, game):
+        visible_hums = arcade.SpriteList()
+        for hum in game.humans_list:
+            if arcade.has_line_of_sight(self.position, hum.position, game.walls_list, ZOMBIE_VISION, 2):
+                visible_hums.append(hum)
+        if visible_hums:
+            nearest_hum, dist_to_nh = arcade.get_closest_sprite(self, visible_hums)
+            vect = (nearest_hum.center_x - self.center_x, nearest_hum.center_y - self.center_y)
+            vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
+            move_vect = vect[0]/(vect_len), vect[1]/(vect_len)
             return move_vect
 
 
@@ -199,6 +255,8 @@ class Item(arcade.Sprite):
     def get_texture(self):
         if self.texture == self.antidote_texture:
             return "antidote"
+        elif self.texture == self.key_texture:
+            return "key"
         elif self.texture == self.knife_texture:
             return "knife"
         else:
@@ -222,7 +280,7 @@ class ZombieSim(arcade.Window):
         self.humans_list = arcade.SpriteList()
         self.moving_list = arcade.SpriteList()
 
-        self.walls_list = arcade.SpriteList()
+        self.walls_list = arcade.SpriteList(use_spatial_hash=True)
 
         self.antidotes_list = arcade.SpriteList()
         self.knives_list = arcade.SpriteList()
@@ -297,7 +355,6 @@ class ZombieSim(arcade.Window):
         # Initialize Walls
         walls = []
         items = []
-        doors = []
         # DEFAULT MAP WITHOUT ITEMS
         # for i in range(8):
         #     if i == 3 or i == 4:
@@ -314,7 +371,7 @@ class ZombieSim(arcade.Window):
                 no_door = random.randint(0, DOOR_GEN)
                 if not no_wall and j != 8:
                     if not no_door:
-                        walls += [Wall("images/dashVert.png", SCALING/50, 50*i+200, 50*j+150 + STATS_HEIGHT)]
+                        walls += [Wall("images/dashVert.png", SCALING/5, 50*i+200, 50*j+150 + STATS_HEIGHT)]
                     else:
                         walls += [Wall("images/vert.png", SCALING/5, 50*i+200, 50*j+150 + STATS_HEIGHT)]
                 no_wall = random.randint(0, WALL_GEN)
@@ -326,12 +383,15 @@ class ZombieSim(arcade.Window):
                         walls += [Wall("images/horiz.png", SCALING/5, 50*i+200, 50*j+100 + STATS_HEIGHT)]
                 no_item = random.randint(0, ITEM_GEN)
                 if not no_item and i != 8 and j != 8:
-                    item_type = random.randint(0,1)
+                    item_type = random.randint(0,2)    
                     if item_type == 0:
-                        item = Item("images/knife.png", SCALING/20, 50*i+225, 50*j+125 + STATS_HEIGHT)
+                        item = Item("images/antidote.png", SCALING/20, 50*i+225, 50*j+125 + STATS_HEIGHT)
                         self.items_list.append(item)
                     elif item_type == 1:
-                        item = Item("images/antidote.png", SCALING/20, 50*i+225, 50*j+125 + STATS_HEIGHT)
+                        item = Item("images/key.png", SCALING/20, 50*i+225, 50*j+125 + STATS_HEIGHT)
+                        self.items_list.append(item)
+                    elif item_type == 2:
+                        item = Item("images/knife.png", SCALING/20, 50*i+225, 50*j+125 + STATS_HEIGHT)
                         self.items_list.append(item)
                     self.all_sprites.append(item)
                     items += [item]
@@ -372,8 +432,10 @@ class ZombieSim(arcade.Window):
             items = ""
             if moving.has_item("antidote"):
                 items += "A"
+            if moving.has_item("key"):
+                items += "Ke"
             if moving.has_item("knife"):
-                items += "K"
+                items += "Kn"
 
             spacing = (mcount-0.5)*SCREEN_WIDTH/(NUM_HUMANS+NUM_ZOMBIES)
             sprite_vel = moving.velocity
@@ -449,24 +511,76 @@ class ZombieSim(arcade.Window):
                         moving.bottom = struck_wall[0].top
                     else:
                         moving.top = struck_wall[0].bottom
-
+                elif wall_tex == "vert_door":
+                    if moving.get_texture() == "zombie":
+                        moving.velocity = (-oldvel[0],oldvel[1]) 
+                        if oldvel[0] < 0:
+                            moving.left = struck_wall[0].right
+                        else:
+                            moving.right = struck_wall[0].left
+                    elif moving.has_item("key"):
+                        moving.use_items(["key"])
+                        if oldvel[0] > 0:
+                            moving.left = struck_wall[0].right
+                        else:
+                            moving.right = struck_wall[0].left
+                        struck_wall[0].lock_door()
+                elif wall_tex == "horiz_door":
+                    if moving.get_texture() == "zombie":
+                        moving.velocity = (oldvel[0],-oldvel[1]) 
+                        if oldvel[1] < 0:
+                            moving.bottom = struck_wall[0].top
+                        else:
+                            moving.top = struck_wall[0].bottom
+                    elif moving.has_item("key"):
+                        moving.use_items(["key"])
+                        if oldvel[1] > 0:
+                            moving.bottom = struck_wall[0].top
+                        else:
+                            moving.top = struck_wall[0].bottom
+                        struck_wall[0].lock_door()
+            hit_edge = False
             if moving.bottom < STATS_HEIGHT:
                 moving.velocity = (oldvel[0],-oldvel[1])
+                moving.bottom = STATS_HEIGHT
+                hit_edge = True
             if moving.left < 0:
                 moving.velocity = (-oldvel[0],oldvel[1])
+                moving.left = 0
+                hit_edge = True
             if moving.top > self.height:
                 moving.velocity = (oldvel[0],-oldvel[1])
+                moving.top = self.height
+                hit_edge = True
             if moving.right > self.width:
                 moving.velocity = (-oldvel[0],oldvel[1])
+                moving.right = self.width
+                hit_edge = True
 
-            if moving in self.humans_list:
+            if moving in self.humans_list or moving in self.infected_list:
                 move_vector = None
-                move_vector = moving.update_avg_z(self) # Update move vector
+                move_vector = moving.update_LoS_to_avg_z(self) # Update move vector
 
-                if move_vector: # if their move vector exists, update their velocity. For now, they just run away.
+                if move_vector and not struck_wall and not hit_edge: # if their move vector exists, update their velocity. For now, they just run away.
+                    moving.velocity = (move_vector[0]*SPEED-SPEED/2), (move_vector[1]*SPEED-SPEED/2) #TODO: code should not work differently for positive and negative movement
+                    v_len = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
+                    moving.velocity = (moving.velocity[0]/v_len)*moving.sprite_speed, (moving.velocity[1]/v_len)*moving.sprite_speed
+
+            if moving in self.zombies_list:
+                move_vector = moving.update_LoS_to_h(self)
+                if move_vector and not struck_wall and not hit_edge:
                     moving.velocity = (move_vector[0]*SPEED-SPEED/2), (move_vector[1]*SPEED-SPEED/2)
                     v_len = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
                     moving.velocity = (moving.velocity[0]/v_len)*moving.sprite_speed, (moving.velocity[1]/v_len)*moving.sprite_speed
+
+
+                # if self.humans_list:
+                #     nearest_human, dist_to_nh = arcade.get_closest_sprite(moving, self.humans_list)
+                #     move_vector = (nearest_human.position[0]-moving.position[0], nearest_human.position[1]-moving.position[1])
+                #     if move_vector and not struck_wall and not hit_edge: # if their move vector exists, update their velocity. For now, they just run away.
+                #         moving.velocity = (move_vector[0]*SPEED-SPEED/2), (move_vector[1]*SPEED-SPEED/2)
+                #         v_len = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
+                #         moving.velocity = (moving.velocity[0]/v_len)*moving.sprite_speed, (moving.velocity[1]/v_len)*moving.sprite_speed
 
         self.all_sprites.update()
 
@@ -495,6 +609,7 @@ class ZombieSim(arcade.Window):
         """
         self.zombies_list.remove(new_human)
         new_human.become_human()
+        new_human.reset_infection_time()
         self.humans_list.append(new_human)
 
     def make_infected(self, new_infected):
