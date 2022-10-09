@@ -19,6 +19,7 @@ line of sight
     -zombies follow closest human in line of sight
     -humans run from closest zombie in line of sight
     -walls block line of sight
+    humans look for items
 -implement doors that can be opened by humans but not zombies
 speed minimums
 random starting positions
@@ -40,7 +41,7 @@ items
     scanner: can recognize infected
 make infected use items
 loot corpses
-corpses traansform into zombies
+corpses transform into zombies
 zombies can break down doors
 items appear over time?
 limited inventory space?

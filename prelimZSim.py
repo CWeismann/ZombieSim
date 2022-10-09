@@ -16,6 +16,9 @@ INCUBATION_PERIOD = 10.0 # seconds
 HUMAN_VISION = 100
 ZOMBIE_VISION = 200
 
+HUMAN_SPEED_MIN = 1.5
+ZOMBIE_SPEED_MIN = 1
+
 MAX_SPEED = 3
 SPEED = 3.0
 WALL_GEN = 2 # larger value = fewer walls; SUGGESTED: 2
@@ -212,6 +215,18 @@ class MovingSprite(arcade.Sprite):
         if visible_hums:
             nearest_hum, dist_to_nh = arcade.get_closest_sprite(self, visible_hums)
             vect = (nearest_hum.center_x - self.center_x, nearest_hum.center_y - self.center_y)
+            vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
+            move_vect = vect[0]/(vect_len), vect[1]/(vect_len)
+            return move_vect
+
+    def update_LoS_to_i(self, game):
+        visible_items = arcade.SpriteList()
+        for item in game.items_list:
+            if arcade.has_line_of_sight(self.position, item.position, game.walls_list, HUMAN_VISION, 2):
+                visible_items.append(item)
+        if visible_items:
+            nearest_item, dist_to_ni = arcade.get_closest_sprite(self, visible_items)
+            vect = (nearest_item.center_x - self.center_x, nearest_item.center_y - self.center_y)
             vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
             move_vect = vect[0]/(vect_len), vect[1]/(vect_len)
             return move_vect
@@ -558,13 +573,20 @@ class ZombieSim(arcade.Window):
                 hit_edge = True
 
             if moving in self.humans_list or moving in self.infected_list:
-                move_vector = None
-                move_vector = moving.update_LoS_to_avg_z(self) # Update move vector
+                move_vector_z = moving.update_LoS_to_avg_z(self)
 
-                if move_vector and not struck_wall and not hit_edge: # if their move vector exists, update their velocity. For now, they just run away.
-                    moving.velocity = (move_vector[0]*SPEED-SPEED/2), (move_vector[1]*SPEED-SPEED/2) #TODO: code should not work differently for positive and negative movement
+                if move_vector_z and not struck_wall and not hit_edge: # if their move vector exists, update their velocity. For now, they just run away.
+                    moving.velocity = (move_vector_z[0]*SPEED-SPEED/2), (move_vector_z[1]*SPEED-SPEED/2) #TODO: code should not work differently for positive and negative movement
                     v_len = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
                     moving.velocity = (moving.velocity[0]/v_len)*moving.sprite_speed, (moving.velocity[1]/v_len)*moving.sprite_speed
+                # MOVE TOWARDS ITEMS - BUGGY
+                # else:
+                #     move_vector_i = moving.update_LoS_to_i(self)
+                #     if move_vector_i and not struck_wall and not hit_edge:
+                #         moving.velocity = (move_vector_i[0]*SPEED-SPEED/2), (move_vector_i[1]*SPEED-SPEED/2)
+                #         v_len = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
+                #         moving.velocity = (moving.velocity[0]/v_len)*moving.sprite_speed, (moving.velocity[1]/v_len)*moving.sprite_speed
+
 
             if moving in self.zombies_list:
                 move_vector = moving.update_LoS_to_h(self)
@@ -604,7 +626,7 @@ class ZombieSim(arcade.Window):
 
     def make_human(self, new_human):
         """
-        Makes a zombie into a human - TO BE IMPLEMENTED?
+        Makes a zombie into a human
         Inputs: the sprite to be changed
         """
         self.zombies_list.remove(new_human)
