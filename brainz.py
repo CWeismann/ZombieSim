@@ -1,4 +1,4 @@
-from prelimZSim import controlled_run
+from ZombieSim import controlled_run
 
 class Wrapper(object):
 
