@@ -21,6 +21,7 @@ class MovingSprite(arcade.Sprite):
         self.antidotes = 0
         self.keys = 0
         self.knives = 0
+        self.guns = 0
 
         self.stat_text = arcade.Text(
             text = "",
@@ -78,6 +79,8 @@ class MovingSprite(arcade.Sprite):
             self.keys += 1
         elif item.get_texture() == "knife":
             self.knives += 1
+        elif item.get_texture() == "gun":
+            self.guns += 1
         
     def has_item(self, name):
         if name == "antidote" and self.antidotes:
@@ -85,6 +88,8 @@ class MovingSprite(arcade.Sprite):
         elif name == "key" and self.keys:
             return True
         elif name == "knife" and self.knives:
+            return True
+        elif name == "gun" and self.guns:
             return True
 
 
@@ -96,6 +101,8 @@ class MovingSprite(arcade.Sprite):
                 self.keys -= 1
             elif name == "knife":
                 self.knives -= 1
+            elif name == "gun":     #eventually will change this to use bullets
+                self.guns -= 1
 
     # DEPRECATED - SEE update_LoS_to_avg_z
     # Gets the average distance and direction of zoms
@@ -125,6 +132,9 @@ class MovingSprite(arcade.Sprite):
         zom_close = False
         for zom in game.zombies_list:
             if arcade.has_line_of_sight(self.position, zom.position, game.walls_list, constants.HUMAN_VISION, 2):
+                if self.has_item("gun"):
+                    self.use_items(["gun"])
+                    game.kill(zom)
                 zom_close = True
                 xcoords.append(zom.center_x) #TODO : make weighted average using distance
                 ycoords.append(zom.center_y)

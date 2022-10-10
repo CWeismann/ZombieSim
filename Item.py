@@ -32,6 +32,8 @@ class Item(arcade.Sprite):
             return "key"
         elif self.texture == self.knife_texture:
             return "knife"
+        elif self.texture == self.gun_texture:
+            return "gun"
         else:
             return "other"
 

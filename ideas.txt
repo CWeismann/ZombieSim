@@ -40,6 +40,7 @@ items
     disguise: zombies will not approach
     scanner: can recognize infected
 make infected use items
+limited use vs. unlimited use items
 loot corpses
 corpses transform into zombies
 zombies can break down doors

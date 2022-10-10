@@ -26,8 +26,10 @@ class ZombieSim(arcade.Window):
 
         self.walls_list = arcade.SpriteList(use_spatial_hash=True)
 
-        self.antidotes_list = arcade.SpriteList()
-        self.knives_list = arcade.SpriteList()
+        # self.antidotes_list = arcade.SpriteList()
+        # self.guns_list = arcade.SpriteList()
+        # self.keys_list = arcade.SpriteList()
+        # self.knives_list = arcade.SpriteList()
         self.items_list = arcade.SpriteList()
 
         self.all_sprites = arcade.SpriteList()
@@ -80,7 +82,15 @@ class ZombieSim(arcade.Window):
             zombies += [MovingSprite("images/cross.png", constants.SCALING/20)]
             zombies[i].left = (i + 1) * constants.SCREEN_WIDTH/(constants.NUM_ZOMBIES+1)
             zombies[i].top = constants.SCREEN_HEIGHT*11/12 + constants.STATS_HEIGHT
-            zombies[i].velocity = (random.random()*constants.SPEED-constants.SPEED/2, random.random()*constants.SPEED-constants.SPEED/2)
+            if random.randint(0,1):
+                xvel = random.random() + constants.ZOMBIE_SPEED_MIN
+            else:
+                xvel = -(random.random() + constants.ZOMBIE_SPEED_MIN)
+            if random.randint(0,1):
+                yvel = random.random() + constants.ZOMBIE_SPEED_MIN
+            else:
+                yvel = -(random.random() + constants.ZOMBIE_SPEED_MIN)
+            zombies[i].velocity = (xvel, yvel)
             self.zombies_list.append(zombies[i])
             self.moving_list.append(zombies[i])
             self.all_sprites.append(zombies[i])
@@ -91,7 +101,15 @@ class ZombieSim(arcade.Window):
             humans += [MovingSprite("images/circleNoFill.png", constants.SCALING/20)]
             humans[i].left = (i + 1) * constants.SCREEN_WIDTH/(constants.NUM_HUMANS+1)
             humans[i].top = constants.SCREEN_HEIGHT/12 + constants.STATS_HEIGHT
-            humans[i].velocity = (random.random()*constants.SPEED-constants.SPEED/2, random.random()*constants.SPEED-constants.SPEED/2)
+            if random.randint(0,1):
+                xvel = random.random() + constants.HUMAN_SPEED_MIN
+            else:
+                xvel = -(random.random() + constants.HUMAN_SPEED_MIN)
+            if random.randint(0,1):
+                yvel = random.random() + constants.HUMAN_SPEED_MIN
+            else:
+                yvel = -(random.random() + constants.HUMAN_SPEED_MIN)
+            humans[i].velocity = (xvel, yvel)
             self.humans_list.append(humans[i])
             self.moving_list.append(humans[i])
             self.all_sprites.append(humans[i])
@@ -127,7 +145,7 @@ class ZombieSim(arcade.Window):
                         walls += [Wall("images/horiz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
                 no_item = random.randint(0, constants.ITEM_GEN)
                 if not no_item and i != 8 and j != 8:
-                    item_type = random.randint(0,2)    
+                    item_type = random.randint(0,3)    
                     if item_type == 0:
                         item = Item("images/antidote.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
                         self.items_list.append(item)
@@ -136,6 +154,9 @@ class ZombieSim(arcade.Window):
                         self.items_list.append(item)
                     elif item_type == 2:
                         item = Item("images/knife.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
+                        self.items_list.append(item)
+                    elif item_type == 3:
+                        item = Item("images/gun.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
                         self.items_list.append(item)
                     self.all_sprites.append(item)
                     items += [item]
@@ -176,6 +197,8 @@ class ZombieSim(arcade.Window):
             items = ""
             if moving.has_item("antidote"):
                 items += "A"
+            if moving.has_item("gun"):
+                items += "G"
             if moving.has_item("key"):
                 items += "Ke"
             if moving.has_item("knife"):
@@ -308,23 +331,23 @@ class ZombieSim(arcade.Window):
                 moving.right = self.width
                 hit_edge_x = True
 
-            if moving in self.humans_list or moving in self.infected_list:
+            if moving in self.humans_list: # or moving in self.infected_list:
                 move_vector_z = moving.update_LoS_to_avg_z(self)
 
-                if move_vector_z and not struck_wall and not hit_edge_x and not hit_edge_y: # if their move vector exists, update their velocity. For now, they just run away.
-                    moving.velocity = (move_vector_z[0]*constants.SPEED-constants.SPEED/2), (move_vector_z[1]*constants.SPEED-constants.SPEED/2) #TODO: code should not work differently for positive and negative movement
-                    v_len = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
-                    moving.velocity = (moving.velocity[0]/v_len)*moving.sprite_speed, (moving.velocity[1]/v_len)*moving.sprite_speed
-                # DIRECTIONAL HANDLING CHANGES - BUGGY
-                # if move_vector:
-                #     xvel = moving.velocity[0]
-                #     yvel = moving.velocity[1]
-                #     if not hit_edge_x and not hit_wall_x:
-                #         xvel = move_vector[0]*constants.SPEED-constants.SPEED/2 #TODO: code should not work differently for positive and negative movement  
-                #     if not hit_edge_y and not hit_wall_y:
-                #         yvel = move_vector[1]*constants.SPEED-constants.SPEED/2 #TODO: code should not work differently for positive and negative movement
-                #     v_len = math.sqrt(xvel**2 + yvel**2)
-                #     moving.velocity = (xvel/v_len)*moving.sprite_speed, (yvel/v_len)*moving.sprite_speed
+                # if move_vector_z and not struck_wall and not hit_edge_x and not hit_edge_y: # if their move vector exists, update their velocity. For now, they just run away.
+                #     moving.velocity = (move_vector_z[0]*constants.SPEED-constants.SPEED/2), (move_vector_z[1]*constants.SPEED-constants.SPEED/2) #TODO: code should not work differently for positive and negative movement
+                #     v_len = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
+                #     moving.velocity = (moving.velocity[0]/v_len)*moving.sprite_speed, (moving.velocity[1]/v_len)*moving.sprite_speed
+                # DIRECTIONAL HANDLING CHANGES - BUGGY vvv
+                if move_vector_z:
+                    xvel = moving.velocity[0]
+                    yvel = moving.velocity[1]
+                    if not hit_edge_x and not hit_wall_x:
+                        xvel = move_vector_z[0]*constants.HUMAN_SPEED_MIN #TODO: code should not work differently for positive and negative movement  
+                    if not hit_edge_y and not hit_wall_y:
+                        yvel = move_vector_z[1]*constants.HUMAN_SPEED_MIN #TODO: code should not work differently for positive and negative movement
+                    v_len = math.sqrt(xvel**2 + yvel**2)
+                    moving.velocity = (xvel/v_len)*moving.sprite_speed, (yvel/v_len)*moving.sprite_speed
                 # MOVE TOWARDS ITEMS - BUGGY
                 # else:
                 #     move_vector_i = moving.update_LoS_to_i(self)
@@ -345,9 +368,9 @@ class ZombieSim(arcade.Window):
                     xvel = moving.velocity[0]
                     yvel = moving.velocity[1]
                     if not hit_edge_x and not hit_wall_x:
-                        xvel = move_vector[0]*constants.SPEED-constants.SPEED/2 #TODO: code should not work differently for positive and negative movement  
+                        xvel = move_vector[0]*constants.HUMAN_SPEED_MIN #TODO: code should not work differently for positive and negative movement  
                     if not hit_edge_y and not hit_wall_y:
-                        yvel = move_vector[1]*constants.SPEED-constants.SPEED/2 #TODO: code should not work differently for positive and negative movement
+                        yvel = move_vector[1]*constants.HUMAN_SPEED_MIN #TODO: code should not work differently for positive and negative movement
                     v_len = math.sqrt(xvel**2 + yvel**2)
                     moving.velocity = (xvel/v_len)*moving.sprite_speed, (yvel/v_len)*moving.sprite_speed
 
@@ -387,6 +410,8 @@ class ZombieSim(arcade.Window):
         """
         self.zombies_list.remove(new_human)
         new_human.become_human()
+        oldvel = new_human.velocity
+        new_human.velocity = (oldvel[0]+constants.HUMAN_SPEED_MIN-constants.ZOMBIE_SPEED_MIN, oldvel[1]+constants.HUMAN_SPEED_MIN-constants.ZOMBIE_SPEED_MIN)
         new_human.reset_infection_time()
         self.humans_list.append(new_human)
 
@@ -406,6 +431,8 @@ class ZombieSim(arcade.Window):
         """
         self.infected_list.remove(new_zombie)
         new_zombie.become_zombie()
+        oldvel = new_zombie.velocity
+        new_zombie.velocity = (oldvel[0]-constants.HUMAN_SPEED_MIN+constants.ZOMBIE_SPEED_MIN, oldvel[1]-constants.HUMAN_SPEED_MIN+constants.ZOMBIE_SPEED_MIN)
         self.zombies_list.append(new_zombie)  
         # if len(self.humans_list) == 0:
         #     arcade.close_window() #REPLACE THIS WITH GAME OVER
