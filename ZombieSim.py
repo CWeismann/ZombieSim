@@ -241,73 +241,90 @@ class ZombieSim(arcade.Window):
             # if going to get stuck in wall and reverse other direction too?
             # Might be less of a problem when intelligent agents are introduced.
             struck_wall = moving.collides_with_list(self.walls_list)
+            hit_wall_x = False
+            hit_wall_y = False
             if struck_wall:
                 wall_tex = struck_wall[0].get_texture()
                 if wall_tex == "vert" or (moving.get_texture() == "zombie" and wall_tex == "vert_door"):
                     moving.velocity = (-oldvel[0],oldvel[1])
+                    hit_wall_x = True
                     if oldvel[0] < 0:
                         moving.left = struck_wall[0].right
                     else:
                         moving.right = struck_wall[0].left
                 elif wall_tex == "horiz" or (moving.get_texture() == "zombie" and wall_tex == "horiz_door"):         
                     moving.velocity = (oldvel[0],-oldvel[1]) 
+                    hit_wall_y = True
                     if oldvel[1] < 0:
                         moving.bottom = struck_wall[0].top
                     else:
                         moving.top = struck_wall[0].bottom
-                elif wall_tex == "vert_door":
-                    if moving.get_texture() == "zombie":
-                        moving.velocity = (-oldvel[0],oldvel[1]) 
-                        if oldvel[0] < 0:
-                            moving.left = struck_wall[0].right
-                        else:
-                            moving.right = struck_wall[0].left
-                    elif moving.has_item("key"):
-                        moving.use_items(["key"])
-                        if oldvel[0] > 0:
-                            moving.left = struck_wall[0].right
-                        else:
-                            moving.right = struck_wall[0].left
-                        struck_wall[0].lock_door()
-                elif wall_tex == "horiz_door":
-                    if moving.get_texture() == "zombie":
-                        moving.velocity = (oldvel[0],-oldvel[1]) 
-                        if oldvel[1] < 0:
-                            moving.bottom = struck_wall[0].top
-                        else:
-                            moving.top = struck_wall[0].bottom
-                    elif moving.has_item("key"):
-                        moving.use_items(["key"])
-                        if oldvel[1] > 0:
-                            moving.bottom = struck_wall[0].top
-                        else:
-                            moving.top = struck_wall[0].bottom
-                        struck_wall[0].lock_door()
-            hit_edge = False
+                elif wall_tex == "vert_door" and moving.has_item("key") and moving.get_texture() != "zombie":
+
+                    # if moving.get_texture() == "zombie":
+                    #     moving.velocity = (-oldvel[0],oldvel[1]) 
+                    #     if oldvel[0] < 0:
+                    #         moving.left = struck_wall[0].right
+                    #     else:
+                    #         moving.right = struck_wall[0].left
+                    # elif moving.has_item("key"):
+                    moving.use_items(["key"])
+                    if oldvel[0] > 0:
+                        moving.left = struck_wall[0].right
+                    else:
+                        moving.right = struck_wall[0].left
+                    struck_wall[0].lock_door()
+                elif wall_tex == "horiz_door" and moving.has_item("key") and moving.get_texture() != "zombie":
+                    # if moving.get_texture() == "zombie":
+                    #     moving.velocity = (oldvel[0],-oldvel[1]) 
+                    #     if oldvel[1] < 0:
+                    #         moving.bottom = struck_wall[0].top
+                    #     else:
+                    #         moving.top = struck_wall[0].bottom
+                    # elif moving.has_item("key"):
+                    moving.use_items(["key"])
+                    if oldvel[1] > 0:
+                        moving.bottom = struck_wall[0].top
+                    else:
+                        moving.top = struck_wall[0].bottom
+                    struck_wall[0].lock_door()
+            # hit_edge = False
+            hit_edge_x = False
+            hit_edge_y = False
             if moving.bottom < constants.STATS_HEIGHT:
                 moving.velocity = (oldvel[0],-oldvel[1])
                 moving.bottom = constants.STATS_HEIGHT
-                hit_edge = True
+                hit_edge_y = True
             if moving.left < 0:
                 moving.velocity = (-oldvel[0],oldvel[1])
                 moving.left = 0
-                hit_edge = True
+                hit_edge_x = True
             if moving.top > self.height:
                 moving.velocity = (oldvel[0],-oldvel[1])
                 moving.top = self.height
-                hit_edge = True
+                hit_edge_y = True
             if moving.right > self.width:
                 moving.velocity = (-oldvel[0],oldvel[1])
                 moving.right = self.width
-                hit_edge = True
+                hit_edge_x = True
 
             if moving in self.humans_list or moving in self.infected_list:
                 move_vector_z = moving.update_LoS_to_avg_z(self)
 
-                if move_vector_z and not struck_wall and not hit_edge: # if their move vector exists, update their velocity. For now, they just run away.
+                if move_vector_z and not struck_wall and not hit_edge_x and not hit_edge_y: # if their move vector exists, update their velocity. For now, they just run away.
                     moving.velocity = (move_vector_z[0]*constants.SPEED-constants.SPEED/2), (move_vector_z[1]*constants.SPEED-constants.SPEED/2) #TODO: code should not work differently for positive and negative movement
                     v_len = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
                     moving.velocity = (moving.velocity[0]/v_len)*moving.sprite_speed, (moving.velocity[1]/v_len)*moving.sprite_speed
+                # DIRECTIONAL HANDLING CHANGES - BUGGY
+                # if move_vector:
+                #     xvel = moving.velocity[0]
+                #     yvel = moving.velocity[1]
+                #     if not hit_edge_x and not hit_wall_x:
+                #         xvel = move_vector[0]*constants.SPEED-constants.SPEED/2 #TODO: code should not work differently for positive and negative movement  
+                #     if not hit_edge_y and not hit_wall_y:
+                #         yvel = move_vector[1]*constants.SPEED-constants.SPEED/2 #TODO: code should not work differently for positive and negative movement
+                #     v_len = math.sqrt(xvel**2 + yvel**2)
+                #     moving.velocity = (xvel/v_len)*moving.sprite_speed, (yvel/v_len)*moving.sprite_speed
                 # MOVE TOWARDS ITEMS - BUGGY
                 # else:
                 #     move_vector_i = moving.update_LoS_to_i(self)
@@ -319,10 +336,20 @@ class ZombieSim(arcade.Window):
 
             if moving in self.zombies_list:
                 move_vector = moving.update_LoS_to_h(self)
-                if move_vector and not struck_wall and not hit_edge:
-                    moving.velocity = (move_vector[0]*constants.SPEED-constants.SPEED/2), (move_vector[1]*constants.SPEED-constants.SPEED/2)
-                    v_len = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
-                    moving.velocity = (moving.velocity[0]/v_len)*moving.sprite_speed, (moving.velocity[1]/v_len)*moving.sprite_speed
+                
+                # if move_vector and not struck_wall and not hit_edge:
+                #     moving.velocity = (move_vector[0]*constants.SPEED-constants.SPEED/2), (move_vector[1]*constants.SPEED-constants.SPEED/2)
+                #     v_len = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
+                #     moving.velocity = (moving.velocity[0]/v_len)*moving.sprite_speed, (moving.velocity[1]/v_len)*moving.sprite_speed
+                if move_vector:
+                    xvel = moving.velocity[0]
+                    yvel = moving.velocity[1]
+                    if not hit_edge_x and not hit_wall_x:
+                        xvel = move_vector[0]*constants.SPEED-constants.SPEED/2 #TODO: code should not work differently for positive and negative movement  
+                    if not hit_edge_y and not hit_wall_y:
+                        yvel = move_vector[1]*constants.SPEED-constants.SPEED/2 #TODO: code should not work differently for positive and negative movement
+                    v_len = math.sqrt(xvel**2 + yvel**2)
+                    moving.velocity = (xvel/v_len)*moving.sprite_speed, (yvel/v_len)*moving.sprite_speed
 
 
                 # if self.humans_list:
