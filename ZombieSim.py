@@ -252,7 +252,34 @@ class ZombieSim(arcade.Window):
         for infected in self.infected_list:
             infected.inc_infection_time(delta_time)
             if infected.get_infection_time() >= constants.INCUBATION_PERIOD:
-                self.make_zombie(infected)
+                if infected.has_item("antidote"):
+                    infected.use_items(["antidote"])
+                    self.make_zombie(infected)
+                    self.make_human(infected)
+                elif infected.has_item("knife"):
+                    infected.use_items(["knife"])
+                    self.kill(infected)
+                elif infected.has_item("gun"):
+                    infected.use_items(["gun"])
+                    self.kill(infected)
+                else:
+                    self.make_zombie(infected)
+            # Should infected use items on zombies? vvv
+            # zombies = infected.collides_with_list(self.zombies_list) # Check for infected-zombie collisions
+            # used_items = []
+            # for zombie in zombies:
+            #     if infected.has_item("antidote"):
+            #         self.make_human(zombie)
+            #         used_items += ["antidote"]
+            #     elif infected.has_item("knife"):
+            #         self.kill(zombie)
+            #         used_items += ["knife"]
+            #     infected.use_items(used_items)
+            items = infected.collides_with_list(self.items_list)
+            for item in items:
+                if item:
+                    infected.gain_item(item)
+                    self.remove_item(item)
         
         # Check for wall and screen collisions
         for moving in self.moving_list:

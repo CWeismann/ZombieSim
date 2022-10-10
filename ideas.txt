@@ -21,7 +21,7 @@ line of sight
     -walls block line of sight
     humans look for items
 -implement doors that can be opened by humans but not zombies
-speed minimums
+-speed minimums
 random starting positions
 better map generation
     -editable map generation constant
@@ -29,7 +29,7 @@ human/zombie pathfinding- when not seeing other team, navigate walls more carefu
 infected can infect humans but humans won't run from them?
 items
     -knife: kills first zombie who hits human
-    gun: might kill zombie in line of sight
+    -gun: might kill zombie in line of sight
     medpack: heals infected human
     -antidote: turns zombie back into human
     bicycle: increase move speed while still human
@@ -39,7 +39,8 @@ items
     dog: attacks closest zombie, but might become one too
     disguise: zombies will not approach
     scanner: can recognize infected
-make infected use items
+-make infected use items (will heal themselves using antidote or kill themselves using gun/knife)
+game should be able to start with infected?
 limited use vs. unlimited use items
 loot corpses
 corpses transform into zombies

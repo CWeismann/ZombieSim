@@ -28,7 +28,7 @@ class MovingSprite(arcade.Sprite):
             start_x = constants.SCREEN_WIDTH / 2,
             start_y = constants.STATS_HEIGHT * 3 / 7,
             color = arcade.color.BLACK,
-            font_size = 7,
+            font_size = 50 / (constants.NUM_HUMANS + constants.NUM_ZOMBIES),
             font_name = "monospace",
             anchor_x = "center",
             anchor_y = "center",
