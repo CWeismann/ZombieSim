@@ -91,6 +91,7 @@ class ZombieSim(arcade.Window):
             else:
                 yvel = -(random.random() + constants.ZOMBIE_SPEED_MIN)
             zombies[i].velocity = (xvel, yvel)
+            zombies[i].base_speed = math.sqrt(xvel**2 + yvel**2)
             self.zombies_list.append(zombies[i])
             self.moving_list.append(zombies[i])
             self.all_sprites.append(zombies[i])
@@ -110,6 +111,7 @@ class ZombieSim(arcade.Window):
             else:
                 yvel = -(random.random() + constants.HUMAN_SPEED_MIN)
             humans[i].velocity = (xvel, yvel)
+            humans[i].base_speed = math.sqrt(xvel**2 + yvel**2)
             self.humans_list.append(humans[i])
             self.moving_list.append(humans[i])
             self.all_sprites.append(humans[i])
@@ -205,9 +207,7 @@ class ZombieSim(arcade.Window):
                 items += "Kn"
 
             spacing = (mcount-0.5)*constants.SCREEN_WIDTH/(constants.NUM_HUMANS + constants.NUM_ZOMBIES)
-            sprite_vel = moving.velocity
-            moving.sprite_speed = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
-            moving.set_stat_text(f"Person {mcount}: {status}\nTime Survived: {moving.get_human_time()}\nSpeed: {moving.sprite_speed:1.1f}\nItems: {items}", spacing)
+            moving.set_stat_text(f"Person {mcount}: {status}\nTime Survived: {moving.get_human_time()}\nSpeed: {moving.base_speed:1.1f}\nItems: {items}", spacing)
 
         # self.stats_text.text = f"|"
         # mcount = 0
@@ -400,6 +400,7 @@ class ZombieSim(arcade.Window):
                         yvel = move_vector[1]*constants.HUMAN_SPEED_MIN #TODO: code should not work differently for positive and negative movement
                     v_len = math.sqrt(xvel**2 + yvel**2)
                     moving.velocity = (xvel/v_len)*moving.sprite_speed, (yvel/v_len)*moving.sprite_speed
+
 
 
                 # if self.humans_list:

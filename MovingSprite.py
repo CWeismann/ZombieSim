@@ -1,6 +1,16 @@
 import constants
 import arcade
 import math
+from enum import IntEnum
+
+class SPEEDSTATE(IntEnum):
+    '''
+    Enum for the speed state of the sprite.
+    '''
+
+    CRAWL = 1
+    WALK = 2
+    RUN = 3
 
 class MovingSprite(arcade.Sprite):
     def __init__(self, image, scale):
@@ -36,15 +46,23 @@ class MovingSprite(arcade.Sprite):
             width = constants.SCREEN_WIDTH / (constants.NUM_HUMANS + constants.NUM_ZOMBIES),
             align = "center"
         )
-        self.sprite_speed = 0
+        
+        self.base_speed = 0
+        self.speed_state = SPEEDSTATE.WALK
+        self.sprite_speed = int(self.speed_state) * self.base_speed
+
+
 
     # Texture changes for role changes
     def become_human(self):
         self.texture = self.human_texture
+        self.set_speed_state(SPEEDSTATE.WALK)
     def become_infected(self):
         self.texture = self.infected_texture
+        self.set_speed_state(SPEEDSTATE.CRAWL)
     def become_zombie(self):
         self.texture = self.zombie_texture
+        self.set_speed_state(SPEEDSTATE.WALK)
     def become_dead(self):
         self.velocity = (0,0)
         self.texture = self.dead_texture
@@ -139,6 +157,7 @@ class MovingSprite(arcade.Sprite):
                 xcoords.append(zom.center_x) #TODO : make weighted average using distance
                 ycoords.append(zom.center_y)
         if zom_close:
+            self.set_speed_state(SPEEDSTATE.RUN)
             x_avg = sum(xcoords)/len(xcoords)
             y_avg = sum(ycoords)/len(ycoords)
             
@@ -149,6 +168,8 @@ class MovingSprite(arcade.Sprite):
             else:
                 move_vect = -vect[0]/(vect_len), -vect[1]/(vect_len)
             return move_vect
+        else:
+            self.set_speed_state(SPEEDSTATE.WALK)
 
     def update_LoS_to_h(self, game):
         visible_hums = arcade.SpriteList()
@@ -156,11 +177,14 @@ class MovingSprite(arcade.Sprite):
             if arcade.has_line_of_sight(self.position, hum.position, game.walls_list, constants.ZOMBIE_VISION, 2):
                 visible_hums.append(hum)
         if visible_hums:
+            self.set_speed_state(SPEEDSTATE.RUN)
             nearest_hum, dist_to_nh = arcade.get_closest_sprite(self, visible_hums)
             vect = (nearest_hum.center_x - self.center_x, nearest_hum.center_y - self.center_y)
             vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
             move_vect = vect[0]/(vect_len), vect[1]/(vect_len)
             return move_vect
+        else:
+            self.set_speed_state(SPEEDSTATE.WALK)
 
     def update_LoS_to_i(self, game):
         visible_items = arcade.SpriteList()
@@ -185,3 +209,14 @@ class MovingSprite(arcade.Sprite):
             return "zombie"
         elif self.texture == self.dead_texture:
             return "dead"
+
+    def set_speed_state(self,newspeed):
+        if self.speed_state == newspeed:
+            return
+        self.speed_state = newspeed
+        self.sprite_speed = int(self.speed_state) * self.base_speed
+
+        xvel = self.velocity[0]
+        yvel = self.velocity[1]
+        v_len = math.sqrt(xvel**2 + yvel**2)
+        self.velocity = (xvel/v_len)*self.sprite_speed, (yvel/v_len)*self.sprite_speed
