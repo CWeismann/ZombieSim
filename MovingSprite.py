@@ -149,7 +149,7 @@ class MovingSprite(arcade.Sprite):
         ycoords = []
         zom_close = False
         for zom in game.zombies_list:
-            if arcade.has_line_of_sight(self.position, zom.position, game.walls_list, constants.HUMAN_VISION, 2):
+            if arcade.has_line_of_sight(self.position, zom.position, game.walls_list, int(constants.HUMAN_VISION * (int(zom.speed_state)/1.5)), 2):
                 if self.has_item("gun"):
                     self.use_items(["gun"])
                     game.kill(zom)
@@ -174,7 +174,7 @@ class MovingSprite(arcade.Sprite):
     def update_LoS_to_h(self, game):
         visible_hums = arcade.SpriteList()
         for hum in game.humans_list:
-            if arcade.has_line_of_sight(self.position, hum.position, game.walls_list, constants.ZOMBIE_VISION, 2):
+            if arcade.has_line_of_sight(self.position, hum.position, game.walls_list, int(constants.ZOMBIE_VISION * (int(hum.speed_state)/1.5)), 2):
                 visible_hums.append(hum)
         if visible_hums:
             self.set_speed_state(SPEEDSTATE.RUN)
