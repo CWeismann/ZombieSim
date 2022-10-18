@@ -8,6 +8,13 @@ class Wrapper(object):
 
 	def control(self, values):
 		dist,dir = values['avg_z']
+
+
+
+
+
+
+		
 		
 
 	def gameover(self, score):

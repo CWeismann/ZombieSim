@@ -25,14 +25,15 @@ class MovingSprite(arcade.Sprite):
         self.zombie_texture = arcade.load_texture("images/cross.png")
         self.dead_texture = arcade.load_texture("images/circleCrossedOut.png")
 
-        self.human_time = 0.0
-        self.infection_time = 0.0
+        self.human_time = 0.0 # Time spent as a human
+        self.infection_time = 0.0 # Time spent as an infected
 
         self.antidotes = 0
         self.keys = 0
         self.knives = 0
         self.guns = 0
 
+        # Generate the text for the stats
         self.stat_text = arcade.Text(
             text = "",
             start_x = constants.SCREEN_WIDTH / 2,
@@ -47,7 +48,7 @@ class MovingSprite(arcade.Sprite):
             align = "center"
         )
         
-        self.base_speed = 0
+        self.base_speed = 0 # speed before modifiers
         self.speed_state = SPEEDSTATE.WALK
         self.sprite_speed = int(self.speed_state) * self.base_speed
 
@@ -57,12 +58,15 @@ class MovingSprite(arcade.Sprite):
     def become_human(self):
         self.texture = self.human_texture
         self.set_speed_state(SPEEDSTATE.WALK)
+
     def become_infected(self):
         self.texture = self.infected_texture
         self.set_speed_state(SPEEDSTATE.CRAWL)
+
     def become_zombie(self):
         self.texture = self.zombie_texture
         self.set_speed_state(SPEEDSTATE.WALK)
+
     def become_dead(self):
         self.velocity = (0,0)
         self.texture = self.dead_texture
@@ -70,6 +74,7 @@ class MovingSprite(arcade.Sprite):
     # Returns the amount of time that an infected has been infected
     def get_infection_time(self):
         return self.infection_time
+
     def get_human_time(self):
         if self.human_time < 0.1:
             return "N/A"
@@ -77,15 +82,20 @@ class MovingSprite(arcade.Sprite):
         seconds = int(self.human_time) % 60
         centiss = int((self.human_time - minutes*60 - seconds)*100)
         return f"{minutes:02d}:{seconds:02d}.{centiss:02d}"
+
     def get_stat_text(self):
         return self.stat_text
+
     # Increases the amount of time that an infected has been infected
     def inc_infection_time(self, dt):
         self.infection_time += dt
+
     def reset_infection_time(self):
         self.infection_time = 0
+
     def inc_human_time(self, dt):
         self.human_time += dt
+
     def set_stat_text(self, new_text, new_spacing):
         self.stat_text.text = new_text
         self.stat_text.x = new_spacing
@@ -122,29 +132,7 @@ class MovingSprite(arcade.Sprite):
             elif name == "gun":     #eventually will change this to use bullets
                 self.guns -= 1
 
-    # DEPRECATED - SEE update_LoS_to_avg_z
-    # Gets the average distance and direction of zoms
-    # def update_avg_z(self, game):
-    #     xcoords = []
-    #     ycoords = []
-    #     zom_close = False
-    #     for zom in game.zombies_list:
-    #         dist = arcade.get_distance_between_sprites(zom, self)
-    #         if dist <= 100: #TODO : make not magic num
-    #             zom_close = True
-    #             xcoords.append(zom.center_x) #TODO : make weighted average using distance
-    #             ycoords.append(zom.center_y)
-    #     if zom_close:
-    #         x_avg = sum(xcoords)/len(xcoords)
-    #         y_avg = sum(ycoords)/len(ycoords)
-            
-    #         vect = (x_avg - self.center_x, y_avg - self.center_y)
-    #         vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
-    #         move_vect = -vect[0]/(vect_len), -vect[1]/(vect_len)
-    #         return move_vect
-
-    # line-of-sight-based alternative to update_avg_z
-    def update_LoS_to_avg_z(self, game):
+    def update_LoS_to_z(self, game):
         xcoords = []
         ycoords = []
         zom_close = False
@@ -154,7 +142,7 @@ class MovingSprite(arcade.Sprite):
                     self.use_items(["gun"])
                     game.kill(zom)
                 zom_close = True
-                xcoords.append(zom.center_x) #TODO : make weighted average using distance
+                xcoords.append(zom.center_x)
                 ycoords.append(zom.center_y)
         if zom_close:
             self.set_speed_state(SPEEDSTATE.RUN)
@@ -167,7 +155,7 @@ class MovingSprite(arcade.Sprite):
                 move_vect = vect[0]/(vect_len), vect[1]/(vect_len)
             else:
                 move_vect = -vect[0]/(vect_len), -vect[1]/(vect_len)
-            return move_vect
+            return move_vect # returns a normalized vector of the direction to move
         else:
             self.set_speed_state(SPEEDSTATE.WALK)
 
@@ -176,7 +164,7 @@ class MovingSprite(arcade.Sprite):
         for hum in game.humans_list:
             if arcade.has_line_of_sight(self.position, hum.position, game.walls_list, int(constants.ZOMBIE_VISION * (int(hum.speed_state)/1.5)), 2):
                 visible_hums.append(hum)
-        if visible_hums:
+        if len(visible_hums) > 0:
             self.set_speed_state(SPEEDSTATE.RUN)
             nearest_hum, dist_to_nh = arcade.get_closest_sprite(self, visible_hums)
             vect = (nearest_hum.center_x - self.center_x, nearest_hum.center_y - self.center_y)
@@ -212,6 +200,11 @@ class MovingSprite(arcade.Sprite):
 
     def set_speed_state(self,newspeed):
         if self.speed_state == newspeed:
+            if self.sprite_speed!=0:
+                xvel = self.velocity[0]
+                yvel = self.velocity[1]
+                v_len = math.sqrt(xvel**2 + yvel**2)
+                self.velocity = (xvel/v_len)*self.sprite_speed, (yvel/v_len)*self.sprite_speed
             return
         self.speed_state = newspeed
         self.sprite_speed = int(self.speed_state) * self.base_speed
