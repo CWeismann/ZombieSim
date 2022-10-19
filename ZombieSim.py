@@ -417,6 +417,15 @@ class ZombieSim(arcade.View):
 class MenuScreen(arcade.View):
     def __init__(self):
         super().__init__()
+        #self.v_box = arcade.gui.UIBoxLayout()
+
+        # Create the buttons
+        # start_button = arcade.gui.UIFlatButton(text="Start Simulation", width=200)
+        # self.v_box.add(start_button.with_space_around(bottom=20))
+
+        # settings_button = arcade.gui.UIFlatButton(text="Settings", width=200)
+        # self.v_box.add(settings_button.with_space_around(bottom=20))
+
     
     def on_show_view(self):
         """ This is run once when we switch to this view """
@@ -434,7 +443,7 @@ class MenuScreen(arcade.View):
                          arcade.color.WHITE, font_size=20, anchor_x="center")
     
     def on_mouse_press(self, _x, _y, _button, _modifiers):
-        """ If the user presses the mouse button, start the game. """
+        """ If the user presses the mouse button, start the simulation. """
         game_view = ZombieSim()
         game_view.setup()
         self.window.show_view(game_view)
@@ -456,7 +465,7 @@ class GameOver(arcade.View):
                          arcade.color.WHITE, font_size=20, anchor_x="center")
 
     def on_mouse_press(self, _x, _y, _button, _modifiers):
-        """ If the user presses the mouse button, re-start the game. """
+        """ If the user presses the mouse button, restart the simulation. """
         game_view = ZombieSim()
         game_view.setup()
         self.window.show_view(game_view)

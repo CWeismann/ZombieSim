@@ -1,0 +1,10 @@
+With thanks to AI for Games by Ian Millington
+
+Use A* algorithm, which is built-in to arcade
+
+Zombies pathfind to human
+Humans pathfind to spot in field of view that is within play area
+    Use heuristic that picks best spot- farthest from zombs?
+
+Decision trees- "balance the tree, but make commonly used branches shorter than rarely used ones
+and put the most expensive decisions late"
