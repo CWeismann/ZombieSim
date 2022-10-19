@@ -7,17 +7,17 @@ from MovingSprite import MovingSprite
 from Wall import Wall
 from Item import Item
 
-class ZombieSim(arcade.Window):
+class ZombieSim(arcade.View):
     """
     The game itself
     """
 
-    def __init__(self, width, height, title):
+    def __init__(self):
         """
         Initializes a new instance of the game, creating sprite lists
         Inputs: the width, height, and title of the screen
         """
-        super().__init__(width, height, title)
+        super().__init__()
 
         self.zombies_list = arcade.SpriteList()
         self.infected_list = arcade.SpriteList()
@@ -292,13 +292,13 @@ class ZombieSim(arcade.Window):
                 moving.velocity = (-oldvel[0],oldvel[1])
                 moving.left = 0
                 hit_edge_x = True
-            if moving.top > self.height:
+            if moving.top > constants.STATS_HEIGHT + constants.SCREEN_HEIGHT:
                 moving.velocity = (oldvel[0],-oldvel[1])
-                moving.top = self.height
+                moving.top = constants.STATS_HEIGHT + constants.SCREEN_HEIGHT
                 hit_edge_y = True
-            if moving.right > self.width:
+            if moving.right > constants.SCREEN_WIDTH:
                 moving.velocity = (-oldvel[0],oldvel[1])
-                moving.right = self.width
+                moving.right = constants.SCREEN_WIDTH
                 hit_edge_x = True
 
             # Human check for zom or items to move towards/away from
@@ -390,8 +390,14 @@ class ZombieSim(arcade.Window):
         velocity = (oldvel[0]-constants.HUMAN_SPEED_MIN+constants.ZOMBIE_SPEED_MIN, oldvel[1]-constants.HUMAN_SPEED_MIN+constants.ZOMBIE_SPEED_MIN)
         new_zombie.base_speed = math.sqrt(velocity[0]**2 + velocity[1]**2)
         self.zombies_list.append(new_zombie)  
-        # if len(self.humans_list) == 0 and len(self.infected_list) == 0:
-        #     arcade.close_window() #REPLACE THIS WITH GAME OVER
+        if len(self.humans_list) == 0 and len(self.infected_list) == 0:
+            print("GAME OVER - ZOMBIES WIN")
+            game_over_view = GameOver()
+            self.window.show_view(game_over_view)
+        if len(self.zombies_list) == 0:
+            print("GAME OVER - HUMANS WIN")
+            game_over_view = GameOver()
+            self.window.show_view(game_over_view)
 
     def kill(self, killed):
         if killed in self.humans_list:
@@ -408,8 +414,58 @@ class ZombieSim(arcade.Window):
         self.items_list.remove(item)
         self.all_sprites.remove(item)
 
+class MenuScreen(arcade.View):
+    def __init__(self):
+        super().__init__()
+    
+    def on_show_view(self):
+        """ This is run once when we switch to this view """
+        arcade.set_background_color(arcade.color.GRAY_BLUE)
+
+        # reset the viewport
+        arcade.set_viewport(0, self.window.width, 0, self.window.height)
+
+    def on_draw(self):
+        """ Draw this view """
+        self.clear()
+        arcade.draw_text("Menu Screen", self.window.width / 2, self.window.height / 2,
+                         arcade.color.WHITE, font_size=50, anchor_x="center")
+        arcade.draw_text("Click to start", self.window.width / 2, self.window.height / 2-75,
+                         arcade.color.WHITE, font_size=20, anchor_x="center")
+    
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        """ If the user presses the mouse button, start the game. """
+        game_view = ZombieSim()
+        game_view.setup()
+        self.window.show_view(game_view)
+
+class GameOver(arcade.View):
+    def __init__(self):
+        """ This is run once when we switch to this view """
+        super().__init__()
+
+        # Reset the viewport
+        arcade.set_viewport(0, constants.SCREEN_WIDTH - 1, 0, constants.STATS_HEIGHT + constants.SCREEN_HEIGHT - 1)
+
+    def on_draw(self):
+        """ Draw this view """
+        self.clear()
+        arcade.draw_text("Game Over", self.window.width / 2, self.window.height / 2,
+                         arcade.color.WHITE, font_size=50, anchor_x="center")
+        arcade.draw_text("Click to restart", self.window.width / 2, self.window.height / 2-75,
+                         arcade.color.WHITE, font_size=20, anchor_x="center")
+
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        """ If the user presses the mouse button, re-start the game. """
+        game_view = ZombieSim()
+        game_view.setup()
+        self.window.show_view(game_view)
+
+    
+
 if __name__ == "__main__":
-    app = ZombieSim(constants.SCREEN_WIDTH,constants.SCREEN_HEIGHT+constants.STATS_HEIGHT,constants.SCREEN_TITLE)
-    app.setup()
+    window = arcade.Window(constants.SCREEN_WIDTH,constants.SCREEN_HEIGHT+constants.STATS_HEIGHT,constants.SCREEN_TITLE)
+    start_view = MenuScreen()
+    window.show_view(start_view)
     arcade.run()
     
