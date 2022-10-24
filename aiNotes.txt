@@ -8,3 +8,17 @@ Humans pathfind to spot in field of view that is within play area
 
 Decision trees- "balance the tree, but make commonly used branches shorter than rarely used ones
 and put the most expensive decisions late"
+
+OPTIONS
+    Rule-based system: what we have already
+        Pretty simple
+        A bit bloated
+    Behavior trees/state machine: RELAXED/MOTIVATED/ALERT
+        Not very complicated
+        Obviously deterministic
+    Goal-oriented: goals with various weights (stay alive/kill/get item/etc.)
+        More complicated
+        More "realistic" behavior
+    Blackboards
+        Can be used with other options
+        Allows coordination between agents
