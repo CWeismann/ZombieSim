@@ -47,3 +47,4 @@ Machine Learning
     Decision learning
         Very good choice
         Works with decision trees
+        Uses ID3/ID4
