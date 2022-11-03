@@ -52,7 +52,7 @@ class MovingSprite(arcade.Sprite):
             anchor_x = "center",
             anchor_y = "center",
             multiline = True,
-            width = constants.SCREEN_WIDTH / (constants.NUM_HUMANS + constants.NUM_ZOMBIES),
+            width = constants.SCREEN_WIDTH // (constants.NUM_HUMANS + constants.NUM_ZOMBIES),
             align = "center"
         )
         
@@ -60,7 +60,7 @@ class MovingSprite(arcade.Sprite):
         self.speed_state = SPEEDSTATE.WALK
         self.sprite_speed = int(self.speed_state) * self.base_speed
 
-        self.bar_list = arcade.AStarBarrierList(self, game.walls_list, 10, 20, constants.SCREEN_WIDTH-20, constants.STATS_HEIGHT+20, constants.SCREEN_HEIGHT-20)
+        self.bar_list = arcade.AStarBarrierList(self, game.walls_list, 25, 0, constants.SCREEN_WIDTH, constants.STATS_HEIGHT, constants.SCREEN_HEIGHT)
 
     # Texture changes for role changes
     def become_human(self):

@@ -80,16 +80,16 @@ class ZombieSim(arcade.View):
                 no_door = random.randint(0, constants.DOOR_GEN)
                 if not no_wall and j != 8:
                     if not no_door:
-                        walls += [Wall("images/dashVert.png", constants.SCALING/5, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
+                        walls += [Wall("images/dashVert.png", constants.SCALING/10, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
                     else:
-                        walls += [Wall("images/vert.png", constants.SCALING/5, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
+                        walls += [Wall("images/vert.png", constants.SCALING/10, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
                 no_wall = random.randint(0, constants.WALL_GEN)
                 no_door = random.randint(0, constants.DOOR_GEN)
                 if not no_wall and i != 8:
                     if not no_door:
-                        walls += [Wall("images/dashHoriz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
+                        walls += [Wall("images/dashHoriz.png", constants.SCALING/10, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
                     else:
-                        walls += [Wall("images/horiz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
+                        walls += [Wall("images/horiz.png", constants.SCALING/10, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
                 no_item = random.randint(0, constants.ITEM_GEN)
                 if not no_item and i != 8 and j != 8:
                     item_type = random.randint(0,3)    
@@ -241,8 +241,8 @@ class ZombieSim(arcade.View):
         
         # Check for wall and screen collisions
         for moving in self.moving_list:
-            if moving.path:
-                continue
+            # if moving.path and len(moving.path) > 0:
+            #     continue
             oldvel = moving.velocity
 
             # Slight workaround here for getting stuck in walls
@@ -334,34 +334,35 @@ class ZombieSim(arcade.View):
                 if move_vector: # and (self.total_time - math.floor(self.total_time) < 0.1):
                     # print(move_vector)
                     moving.path = arcade.astar_calculate_path(moving.position,move_vector,moving.bar_list,False)
+                    print(moving.path)
                     if moving.path:
                         moving.path.pop(0)
                     print(move_vector)
                     print(moving.position)
                     print(moving.path)
 
-                if moving.path and len(moving.path) > 0:
-                    x,y = moving.path[0]
-
+                if moving.path:
+                    if math.sqrt((moving.center_x-moving.path[0][0])**2 + ((moving.center_y-moving.path[0][1])**2)) <= 30:
+                        print("SWITCH")
+                        moving.path = moving.path[1:]
+                    if moving.path:
+                        x,y = moving.path[0]
+                    elif move_vector:
+                        x,y = move_vector
+                    else:
+                        continue
                     vect = (x - moving.center_x, y - moving.center_y)
                     angle = math.atan2(vect[1], vect[0])
 
                     change_x = math.cos(angle) * moving.sprite_speed
                     change_y = math.sin(angle) * moving.sprite_speed
 
-                    moving.velocity = change_x, change_y
 
-
-                    vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
-                    moving.velocity = (vect[0]/(vect_len))*moving.sprite_speed, (vect[1]/(vect_len))*moving.sprite_speed
-
-
-
-                
-                    if math.sqrt((moving.center_x-moving.path[0][0])**2 + ((moving.center_y-moving.path[0][1])**2)) <= moving.sprite_speed*10:
-                        print("SWITCH")
-                        moving.path = moving.path[1:]
+                    vect_len = math.sqrt(change_x**2 + change_y**2)
                     
+                    moving.velocity = (change_x/(vect_len))*moving.sprite_speed, (change_y/(vect_len))*moving.sprite_speed
+
+
 
 
                 # DIRECTIONAL HANDLING CHANGES - BUGGY vvv
