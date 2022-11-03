@@ -12,7 +12,7 @@ class SPEEDSTATE(IntEnum):
     WALK = 2
     RUN = 3
 
-class Mood(Enum):
+class Mood(IntEnum):
     RELAXED = 1
     MOTIVATED = 2
     ALERT = 3
@@ -37,6 +37,7 @@ class MovingSprite(arcade.Sprite):
         self.keys = 0
         self.knives = 0
         self.guns = 0
+
 
         # Generate the text for the stats
         self.stat_text = arcade.Text(
@@ -153,7 +154,9 @@ class MovingSprite(arcade.Sprite):
             self.set_speed_state(SPEEDSTATE.RUN)
             x_avg = sum(xcoords)/len(xcoords)
             y_avg = sum(ycoords)/len(ycoords)
-            
+            ##
+            return x_avg, y_avg
+            ##
             vect = (x_avg - self.center_x, y_avg - self.center_y)
             vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
             if self.has_item("knife") or self.has_item("antidote"):
@@ -172,6 +175,7 @@ class MovingSprite(arcade.Sprite):
         if len(visible_hums) > 0:
             self.set_speed_state(SPEEDSTATE.RUN)
             nearest_hum, dist_to_nh = arcade.get_closest_sprite(self, visible_hums)
+            return (nearest_hum.center_x, nearest_hum.center_y)
             vect = (nearest_hum.center_x - self.center_x, nearest_hum.center_y - self.center_y)
             vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
             move_vect = vect[0]/(vect_len), vect[1]/(vect_len)

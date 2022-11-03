@@ -155,6 +155,8 @@ class ZombieSim(arcade.View):
 
         
 
+        
+
     def on_update(self, delta_time: float = 1/60):
         """
         Runs each time the game is updated, checking for human/zombie
@@ -314,6 +316,9 @@ class ZombieSim(arcade.View):
                         yvel = move_vector_z[1]*constants.HUMAN_SPEED_MIN
                     v_len = math.sqrt(xvel**2 + yvel**2)
                     moving.velocity = (xvel/v_len)*moving.sprite_speed, (yvel/v_len)*moving.sprite_speed
+                
+                
+
                 # MOVE TOWARDS ITEMS - BUGGY
                 # else:
                 #     move_vector_i = moving.update_LoS_to_i(self)
@@ -326,16 +331,22 @@ class ZombieSim(arcade.View):
             if moving in self.zombies_list:
                 move_vector = moving.update_LoS_to_h(self)
                 
-                # DIRECTIONAL HANDLING CHANGES - BUGGY vvv
                 if move_vector:
-                    xvel = moving.velocity[0]
-                    yvel = moving.velocity[1]
-                    if not hit_edge_x and not hit_wall_x:
-                        xvel = move_vector[0]*constants.HUMAN_SPEED_MIN
-                    if not hit_edge_y and not hit_wall_y:
-                        yvel = move_vector[1]*constants.HUMAN_SPEED_MIN
-                    v_len = math.sqrt(xvel**2 + yvel**2)
-                    moving.velocity = (xvel/v_len)*moving.sprite_speed, (yvel/v_len)*moving.sprite_speed
+                    # print(move_vector)
+                    zom_bar_list = arcade.AStarBarrierList(moving, self.walls_list, 50, 0, constants.SCREEN_WIDTH, constants.STATS_HEIGHT, constants.SCREEN_HEIGHT)
+                    path = arcade.astar_calculate_path(moving.position,move_vector,zom_bar_list,True)
+                    # print(path)
+
+                # DIRECTIONAL HANDLING CHANGES - BUGGY vvv
+                # if move_vector:
+                #     xvel = moving.velocity[0]
+                #     yvel = moving.velocity[1]
+                #     if not hit_edge_x and not hit_wall_x:
+                #         xvel = move_vector[0]*constants.HUMAN_SPEED_MIN
+                #     if not hit_edge_y and not hit_wall_y:
+                #         yvel = move_vector[1]*constants.HUMAN_SPEED_MIN
+                #     v_len = math.sqrt(xvel**2 + yvel**2)
+                #     moving.velocity = (xvel/v_len)*moving.sprite_speed, (yvel/v_len)*moving.sprite_speed
 
         self.all_sprites.update()
 
