@@ -241,6 +241,8 @@ class ZombieSim(arcade.View):
         
         # Check for wall and screen collisions
         for moving in self.moving_list:
+            if moving.path:
+                continue
             oldvel = moving.velocity
 
             # Slight workaround here for getting stuck in walls
@@ -329,13 +331,17 @@ class ZombieSim(arcade.View):
             if moving in self.zombies_list:
                 move_vector = moving.update_LoS_to_h(self)
                 
-                if move_vector:
+                if move_vector: # and (self.total_time - math.floor(self.total_time) < 0.1):
                     # print(move_vector)
-                    moving.path = arcade.astar_calculate_path(moving.position,move_vector,moving.bar_list,True)
+                    moving.path = arcade.astar_calculate_path(moving.position,move_vector,moving.bar_list,False)
+                    if moving.path:
+                        moving.path.pop(0)
+                    print(move_vector)
+                    print(moving.position)
+                    print(moving.path)
 
-                if moving.path:
+                if moving.path and len(moving.path) > 0:
                     x,y = moving.path[0]
-                    
 
                     vect = (x - moving.center_x, y - moving.center_y)
                     angle = math.atan2(vect[1], vect[0])
@@ -346,13 +352,14 @@ class ZombieSim(arcade.View):
                     moving.velocity = change_x, change_y
 
 
-                    # vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
-                    # moving.velocity = (vect[0]/(vect_len))*moving.sprite_speed, (vect[1]/(vect_len))*moving.sprite_speed
+                    vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
+                    moving.velocity = (vect[0]/(vect_len))*moving.sprite_speed, (vect[1]/(vect_len))*moving.sprite_speed
 
 
 
                 
-                    if math.sqrt((moving.center_x-moving.path[0][0])**2 + ((moving.center_y-moving.path[0][1])**2)) <= 10:
+                    if math.sqrt((moving.center_x-moving.path[0][0])**2 + ((moving.center_y-moving.path[0][1])**2)) <= moving.sprite_speed*10:
+                        print("SWITCH")
                         moving.path = moving.path[1:]
                     
 

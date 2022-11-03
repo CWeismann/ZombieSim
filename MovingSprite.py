@@ -60,7 +60,7 @@ class MovingSprite(arcade.Sprite):
         self.speed_state = SPEEDSTATE.WALK
         self.sprite_speed = int(self.speed_state) * self.base_speed
 
-        self.bar_list = arcade.AStarBarrierList(self, game.walls_list, 10, 0, constants.SCREEN_WIDTH, constants.STATS_HEIGHT, constants.SCREEN_HEIGHT)
+        self.bar_list = arcade.AStarBarrierList(self, game.walls_list, 10, 20, constants.SCREEN_WIDTH-20, constants.STATS_HEIGHT+20, constants.SCREEN_HEIGHT-20)
 
     # Texture changes for role changes
     def become_human(self):
@@ -157,7 +157,7 @@ class MovingSprite(arcade.Sprite):
             x_avg = sum(xcoords)/len(xcoords)
             y_avg = sum(ycoords)/len(ycoords)
             ##
-            return x_avg, y_avg
+            # return x_avg, y_avg
             ##
             vect = (x_avg - self.center_x, y_avg - self.center_y)
             vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
