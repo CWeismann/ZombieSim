@@ -8,3 +8,43 @@ Humans pathfind to spot in field of view that is within play area
 
 Decision trees- "balance the tree, but make commonly used branches shorter than rarely used ones
 and put the most expensive decisions late"
+
+OPTIONS
+    Rule-based system: what we have already
+        Pretty simple
+        A bit bloated
+    Behavior trees/state machine: RELAXED/MOTIVATED/ALERT
+        Not very complicated
+        Obviously deterministic
+    Goal-oriented: goals with various weights (stay alive/kill/get item/etc.)
+        More complicated
+        More "realistic" behavior
+    Fuzzy Logic:
+        Possibly quite complicated
+        Value of current location vs. other location
+    Machine Learning:
+        Very complicated
+        Might not be feasible
+    Blackboards:
+        Can be used with other options
+        Allows coordination between agents
+
+Strategy/Tactics
+    Cover points/tactical locations
+        Preset graph far preferred- low/no randomization
+    Agent influence- closer = stronger
+        Location influence/security
+    Frag Maps
+        Preset graph required
+    Tactical Pathfinding
+        Might be tough to implement with built-in A*
+    Emergent Cooperation
+        Easy, but might be predictable and hard to improve
+    Cooperation Scripts
+        Too predictable- poor idea for this application
+
+Machine Learning
+    Decision learning
+        Very good choice
+        Works with decision trees
+        Uses ID3/ID4

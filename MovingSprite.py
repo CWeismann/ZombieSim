@@ -12,6 +12,11 @@ class SPEEDSTATE(IntEnum):
     WALK = 2
     RUN = 3
 
+class Mood(Enum):
+    RELAXED = 1
+    MOTIVATED = 2
+    ALERT = 3
+
 class MovingSprite(arcade.Sprite):
     def __init__(self, image, scale):
         """
@@ -213,3 +218,46 @@ class MovingSprite(arcade.Sprite):
         yvel = self.velocity[1]
         v_len = math.sqrt(xvel**2 + yvel**2)
         self.velocity = (xvel/v_len)*self.sprite_speed, (yvel/v_len)*self.sprite_speed
+
+    def makeHumanDecision(self, game):
+        # DECISION TREE - In Active Development
+        visibleZom = False
+        for zom in game.zombies_list:
+            if arcade.has_line_of_sight(self.position,zom.position,game.walls_list,constants.HUMAN_VISION):
+                visibleZom = True
+                break
+        visibleItem = False
+        for item in game.items_list:
+            if arcade.has_line_of_sight(self.position,item.position,game.walls_list,constants.HUMAN_VISION):
+                visibleItem = True
+                break
+        if self.mood == Mood.RELAXED:
+            if visibleZom:
+                self.mood = Mood.ALERT
+            elif visibleItem:
+                self.mood = Mood.MOTIVATED
+            else:
+                pass # a* to random point?
+        if self.mood == Mood.MOTIVATED:
+            if visibleZom:
+                self.mood = Mood.ALERT
+            elif visibleItem:
+                pass # a* to item
+            else:
+                self.mood = Mood.RELAXED
+        if self.mood == Mood.ALERT:
+            if visibleZom:
+                if self.hasItem("gun"):
+                    pass # shoot zom
+                elif self.hasItem("knife") or self.hasItem("antidote"):
+                    pass # a* to zom
+                if self.visibleDoor:
+                    # if zom through door:
+                        # a* to best spot
+                    # else:
+                        # a* through door
+                    pass
+                else:
+                    pass # a* to best spot
+        else:
+            self.mood = Mood.RELAXED
