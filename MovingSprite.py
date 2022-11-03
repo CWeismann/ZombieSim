@@ -18,7 +18,7 @@ class Mood(IntEnum):
     ALERT = 3
 
 class MovingSprite(arcade.Sprite):
-    def __init__(self, image, scale):
+    def __init__(self, image, scale, game):
         """
         Initializes a new MovingSprite sprite (Human/Zombie/Infected)
         Inputs: the starting sprite image, and the scaling of the screen
@@ -37,6 +37,8 @@ class MovingSprite(arcade.Sprite):
         self.keys = 0
         self.knives = 0
         self.guns = 0
+
+        self.path = []
 
 
         # Generate the text for the stats
@@ -58,7 +60,7 @@ class MovingSprite(arcade.Sprite):
         self.speed_state = SPEEDSTATE.WALK
         self.sprite_speed = int(self.speed_state) * self.base_speed
 
-
+        self.bar_list = arcade.AStarBarrierList(self, game.walls_list, 10, 0, constants.SCREEN_WIDTH, constants.STATS_HEIGHT, constants.SCREEN_HEIGHT)
 
     # Texture changes for role changes
     def become_human(self):

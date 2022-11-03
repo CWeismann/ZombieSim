@@ -59,47 +59,7 @@ class ZombieSim(arcade.View):
         """
         arcade.set_background_color(arcade.color.WHITE)
         self.total_time = 0.0
-        
-        # Initialize Zombies
-        zombies = []
-        for i in range(constants.NUM_ZOMBIES):
-            zombies += [MovingSprite("images/cross.png", constants.SCALING/20)]
-            zombies[i].left = (i + 1) * constants.SCREEN_WIDTH/(constants.NUM_ZOMBIES+1)
-            zombies[i].top = constants.SCREEN_HEIGHT*11/12 + constants.STATS_HEIGHT
-            if random.randint(0,1):
-                xvel = random.random() + constants.ZOMBIE_SPEED_MIN
-            else:
-                xvel = -(random.random() + constants.ZOMBIE_SPEED_MIN)
-            if random.randint(0,1):
-                yvel = random.random() + constants.ZOMBIE_SPEED_MIN
-            else:
-                yvel = -(random.random() + constants.ZOMBIE_SPEED_MIN)
-            zombies[i].velocity = (xvel, yvel)
-            zombies[i].base_speed = math.sqrt(xvel**2 + yvel**2)
-            self.zombies_list.append(zombies[i])
-            self.moving_list.append(zombies[i])
-            self.all_sprites.append(zombies[i])
-        
-        #Initialize Humans
-        humans = []
-        for i in range(constants.NUM_HUMANS):
-            humans += [MovingSprite("images/circleNoFill.png", constants.SCALING/20)]
-            humans[i].left = (i + 1) * constants.SCREEN_WIDTH/(constants.NUM_HUMANS+1)
-            humans[i].top = constants.SCREEN_HEIGHT/12 + constants.STATS_HEIGHT
-            if random.randint(0,1):
-                xvel = random.random() + constants.HUMAN_SPEED_MIN
-            else:
-                xvel = -(random.random() + constants.HUMAN_SPEED_MIN)
-            if random.randint(0,1):
-                yvel = random.random() + constants.HUMAN_SPEED_MIN
-            else:
-                yvel = -(random.random() + constants.HUMAN_SPEED_MIN)
-            humans[i].velocity = (xvel, yvel)
-            humans[i].base_speed = math.sqrt(xvel**2 + yvel**2)
-            self.humans_list.append(humans[i])
-            self.moving_list.append(humans[i])
-            self.all_sprites.append(humans[i])
-        
+                
         # Initialize Walls
         walls = []
         items = []
@@ -153,7 +113,45 @@ class ZombieSim(arcade.View):
             self.walls_list.append(wall)
             self.all_sprites.append(wall)
 
+                # Initialize Zombies
+        zombies = []
+        for i in range(constants.NUM_ZOMBIES):
+            zombies += [MovingSprite("images/cross.png", constants.SCALING/20,self)]
+            zombies[i].left = (i + 1) * constants.SCREEN_WIDTH/(constants.NUM_ZOMBIES+1)
+            zombies[i].top = constants.SCREEN_HEIGHT*11/12 + constants.STATS_HEIGHT
+            if random.randint(0,1):
+                xvel = random.random() + constants.ZOMBIE_SPEED_MIN
+            else:
+                xvel = -(random.random() + constants.ZOMBIE_SPEED_MIN)
+            if random.randint(0,1):
+                yvel = random.random() + constants.ZOMBIE_SPEED_MIN
+            else:
+                yvel = -(random.random() + constants.ZOMBIE_SPEED_MIN)
+            zombies[i].velocity = (xvel, yvel)
+            zombies[i].base_speed = math.sqrt(xvel**2 + yvel**2)
+            self.zombies_list.append(zombies[i])
+            self.moving_list.append(zombies[i])
+            self.all_sprites.append(zombies[i])
         
+        #Initialize Humans
+        humans = []
+        for i in range(constants.NUM_HUMANS):
+            humans += [MovingSprite("images/circleNoFill.png", constants.SCALING/20,self)]
+            humans[i].left = (i + 1) * constants.SCREEN_WIDTH/(constants.NUM_HUMANS+1)
+            humans[i].top = constants.SCREEN_HEIGHT/12 + constants.STATS_HEIGHT
+            if random.randint(0,1):
+                xvel = random.random() + constants.HUMAN_SPEED_MIN
+            else:
+                xvel = -(random.random() + constants.HUMAN_SPEED_MIN)
+            if random.randint(0,1):
+                yvel = random.random() + constants.HUMAN_SPEED_MIN
+            else:
+                yvel = -(random.random() + constants.HUMAN_SPEED_MIN)
+            humans[i].velocity = (xvel, yvel)
+            humans[i].base_speed = math.sqrt(xvel**2 + yvel**2)
+            self.humans_list.append(humans[i])
+            self.moving_list.append(humans[i])
+            self.all_sprites.append(humans[i])
 
         
 
@@ -333,9 +331,31 @@ class ZombieSim(arcade.View):
                 
                 if move_vector:
                     # print(move_vector)
-                    zom_bar_list = arcade.AStarBarrierList(moving, self.walls_list, 50, 0, constants.SCREEN_WIDTH, constants.STATS_HEIGHT, constants.SCREEN_HEIGHT)
-                    path = arcade.astar_calculate_path(moving.position,move_vector,zom_bar_list,True)
-                    # print(path)
+                    moving.path = arcade.astar_calculate_path(moving.position,move_vector,moving.bar_list,True)
+
+                if moving.path:
+                    x,y = moving.path[0]
+                    
+
+                    vect = (x - moving.center_x, y - moving.center_y)
+                    angle = math.atan2(vect[1], vect[0])
+
+                    change_x = math.cos(angle) * moving.sprite_speed
+                    change_y = math.sin(angle) * moving.sprite_speed
+
+                    moving.velocity = change_x, change_y
+
+
+                    # vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
+                    # moving.velocity = (vect[0]/(vect_len))*moving.sprite_speed, (vect[1]/(vect_len))*moving.sprite_speed
+
+
+
+                
+                    if math.sqrt((moving.center_x-moving.path[0][0])**2 + ((moving.center_y-moving.path[0][1])**2)) <= 10:
+                        moving.path = moving.path[1:]
+                    
+
 
                 # DIRECTIONAL HANDLING CHANGES - BUGGY vvv
                 # if move_vector:
