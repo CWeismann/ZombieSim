@@ -9,6 +9,9 @@
     text is a bit fuzzy
 end of game screen that shows game length stats?
 menu screen to select settings
+    -human/zombie numbers
+    activated items
+    wall generation random/preset
 -bottom of the screen reference for each movingSprite's stats
     -Count of zombies and humans
     -How long they were human
