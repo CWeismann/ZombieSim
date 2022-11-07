@@ -33,6 +33,8 @@ class MovingSprite(arcade.Sprite):
         self.human_time = 0.0 # Time spent as a human
         self.infection_time = 0.0 # Time spent as an infected
 
+        self.check_time = 0.0 # Time since last a* update
+
         self.antidotes = 0
         self.keys = 0
         self.knives = 0
@@ -60,7 +62,7 @@ class MovingSprite(arcade.Sprite):
         self.speed_state = SPEEDSTATE.WALK
         self.sprite_speed = int(self.speed_state) * self.base_speed
 
-        self.bar_list = arcade.AStarBarrierList(self, game.walls_list, 25, 0, constants.SCREEN_WIDTH, constants.STATS_HEIGHT, constants.SCREEN_HEIGHT)
+        self.bar_list = arcade.AStarBarrierList(self, game.walls_list, 50, 0, constants.SCREEN_WIDTH, constants.STATS_HEIGHT, constants.SCREEN_HEIGHT)
 
     # Texture changes for role changes
     def become_human(self):
@@ -183,6 +185,7 @@ class MovingSprite(arcade.Sprite):
             move_vect = vect[0]/(vect_len), vect[1]/(vect_len)
             return move_vect
         else:
+            # print("walkin'")
             self.set_speed_state(SPEEDSTATE.WALK)
 
     def update_LoS_to_i(self, game):
@@ -225,7 +228,7 @@ class MovingSprite(arcade.Sprite):
         v_len = math.sqrt(xvel**2 + yvel**2)
         self.velocity = (xvel/v_len)*self.sprite_speed, (yvel/v_len)*self.sprite_speed
 
-    def makeHumanDecision(self, game):
+    def make_human_decision(self, game):
         # DECISION TREE - In Active Development
         visibleZom = False
         for zom in game.zombies_list:

@@ -1,5 +1,6 @@
 from calendar import c
 import arcade
+import arcade.gui
 import random
 import math
 import constants
@@ -80,16 +81,16 @@ class ZombieSim(arcade.View):
                 no_door = random.randint(0, constants.DOOR_GEN)
                 if not no_wall and j != 8:
                     if not no_door:
-                        walls += [Wall("images/dashVert.png", constants.SCALING/10, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
+                        walls += [Wall("images/dashVert.png", constants.SCALING/5, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
                     else:
-                        walls += [Wall("images/vert.png", constants.SCALING/10, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
+                        walls += [Wall("images/vert.png", constants.SCALING/5, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
                 no_wall = random.randint(0, constants.WALL_GEN)
                 no_door = random.randint(0, constants.DOOR_GEN)
                 if not no_wall and i != 8:
                     if not no_door:
-                        walls += [Wall("images/dashHoriz.png", constants.SCALING/10, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
+                        walls += [Wall("images/dashHoriz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
                     else:
-                        walls += [Wall("images/horiz.png", constants.SCALING/10, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
+                        walls += [Wall("images/horiz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
                 no_item = random.randint(0, constants.ITEM_GEN)
                 if not no_item and i != 8 and j != 8:
                     item_type = random.randint(0,3)    
@@ -330,20 +331,21 @@ class ZombieSim(arcade.View):
             # Zombie check for humans to move towards/away from
             if moving in self.zombies_list:
                 move_vector = moving.update_LoS_to_h(self)
-                
-                if move_vector: # and (self.total_time - math.floor(self.total_time) < 0.1):
+                moving.check_time += delta_time
+                if move_vector and moving.check_time > constants.CHECK_TIME and False:
                     # print(move_vector)
-                    moving.path = arcade.astar_calculate_path(moving.position,move_vector,moving.bar_list,False)
+                    moving.check_time = 0.0
+                    moving.path = arcade.astar_calculate_path(moving.position,move_vector,moving.bar_list,True)
                     print(moving.path)
                     if moving.path:
                         moving.path.pop(0)
-                    print(move_vector)
-                    print(moving.position)
-                    print(moving.path)
+                    # print(move_vector)
+                    # print(moving.position)
+                    # print(moving.path)
 
-                if moving.path:
+                if moving.path and len(moving.path) > 1:
                     if math.sqrt((moving.center_x-moving.path[0][0])**2 + ((moving.center_y-moving.path[0][1])**2)) <= 30:
-                        print("SWITCH")
+                        # print("SWITCH")
                         moving.path = moving.path[1:]
                     if moving.path:
                         x,y = moving.path[0]
@@ -361,8 +363,16 @@ class ZombieSim(arcade.View):
                     vect_len = math.sqrt(change_x**2 + change_y**2)
                     
                     moving.velocity = (change_x/(vect_len))*moving.sprite_speed, (change_y/(vect_len))*moving.sprite_speed
-
-
+                elif move_vector:
+                    xvel = moving.velocity[0]
+                    yvel = moving.velocity[1]
+                    if not hit_edge_x and not hit_wall_x:
+                        xvel = move_vector[0]*constants.ZOMBIE_SPEED_MIN
+                    if not hit_edge_y and not hit_wall_y:
+                        yvel = move_vector[1]*constants.ZOMBIE_SPEED_MIN
+                    v_len = math.sqrt(xvel**2 + yvel**2)
+                    moving.velocity = -(xvel/v_len)*moving.sprite_speed, -(yvel/v_len)*moving.sprite_speed
+            
 
 
                 # DIRECTIONAL HANDLING CHANGES - BUGGY vvv
@@ -433,10 +443,6 @@ class ZombieSim(arcade.View):
             print("GAME OVER - ZOMBIES WIN")
             game_over_view = GameOver()
             self.window.show_view(game_over_view)
-        if len(self.zombies_list) == 0:
-            print("GAME OVER - HUMANS WIN")
-            game_over_view = GameOver()
-            self.window.show_view(game_over_view)
 
     def kill(self, killed):
         if killed in self.humans_list:
@@ -446,6 +452,10 @@ class ZombieSim(arcade.View):
         if killed in self.zombies_list:
             self.zombies_list.remove(killed)
         killed.become_dead()
+        if len(self.zombies_list) == 0:
+            print("GAME OVER - HUMANS WIN")
+            game_over_view = GameOver()
+            self.window.show_view(game_over_view)
         # self.moving_list.remove(killed)
         #self.all_sprites.remove(killed)
 
@@ -456,14 +466,45 @@ class ZombieSim(arcade.View):
 class MenuScreen(arcade.View):
     def __init__(self):
         super().__init__()
-        #self.v_box = arcade.gui.UIBoxLayout()
+        
+        self.manager = arcade.gui.UIManager()
+        self.manager.enable()
+
+        # Render button
+        default_style = {
+            "font_name": ("calibri", "arial"),
+            "font_size": 15,
+            "font_color": arcade.color.WHITE,
+            "border_width": 2,
+            "border_color": None,
+            "bg_color": (21, 19, 21),
+
+            # used if button is pressed
+            "bg_color_pressed": arcade.color.WHITE,
+            "border_color_pressed": arcade.color.WHITE,  # also used when hovered
+            "font_color_pressed": arcade.color.BLACK,
+        }
+
+        # Create a vertical BoxGroup to align buttons
+        self.v_box = arcade.gui.UIBoxLayout(space_between=20)
 
         # Create the buttons
-        # start_button = arcade.gui.UIFlatButton(text="Start Simulation", width=200)
-        # self.v_box.add(start_button.with_space_around(bottom=20))
+        start_button = arcade.gui.UIFlatButton(text="Start", width=200, style=default_style)
+        settings_button = arcade.gui.UIFlatButton(text="Settings", width=200, style=default_style)
 
-        # settings_button = arcade.gui.UIFlatButton(text="Settings", width=200)
-        # self.v_box.add(settings_button.with_space_around(bottom=20))
+        self.v_box.add(start_button)
+        self.v_box.add(settings_button)
+
+        start_button.on_click = self.on_click_start
+        settings_button.on_click = self.on_click_settings
+
+        # Create a widget to hold the v_box widget, that will center the buttons
+        self.manager.add(
+            arcade.gui.UIAnchorWidget(
+                anchor_x="center_x",
+                anchor_y="center_y",
+                child=self.v_box)
+        )
 
     
     def on_show_view(self):
@@ -476,16 +517,136 @@ class MenuScreen(arcade.View):
     def on_draw(self):
         """ Draw this view """
         self.clear()
-        arcade.draw_text("Menu Screen", self.window.width / 2, self.window.height / 2,
-                         arcade.color.WHITE, font_size=50, anchor_x="center")
-        arcade.draw_text("Click to start", self.window.width / 2, self.window.height / 2-75,
-                         arcade.color.WHITE, font_size=20, anchor_x="center")
+        self.manager.draw()
     
-    def on_mouse_press(self, _x, _y, _button, _modifiers):
-        """ If the user presses the mouse button, start the simulation. """
+    def on_click_start(self, event):
+        """ If the user presses the start button, start the simulation. """
         game_view = ZombieSim()
         game_view.setup()
         self.window.show_view(game_view)
+
+    def on_click_settings(self, event):
+        """ If the user presses the settings button, open the settings menu. """
+        # message_box = arcade.gui.UIMessageBox(
+        #     width=300,
+        #     height=200,
+        #     message_text=(
+        #         "Settings Menu Goes Here"
+        #     ),
+        #     buttons=("Save",)
+        # )
+
+        # self.manager.add(message_box)
+
+        settings_view = Settings()
+        self.window.show_view(settings_view)
+
+class Settings(arcade.View):
+    def __init__(self):
+        """ This is run once when we switch to this view """
+        super().__init__()
+
+        self.manager = arcade.gui.UIManager()
+        self.manager.enable()
+
+        # Render button
+        default_style = {
+            "font_name": ("calibri", "arial"),
+            "font_size": 15,
+            "font_color": arcade.color.WHITE,
+            "border_width": 2,
+            "border_color": None,
+            "bg_color": (21, 19, 21),
+
+            # used if button is pressed
+            "bg_color_pressed": arcade.color.WHITE,
+            "border_color_pressed": arcade.color.WHITE,  # also used when hovered
+            "font_color_pressed": arcade.color.BLACK,
+        }
+        none_style = {
+            "font_name": ("calibri", "arial"),
+            "font_size": 15,
+            "font_color": arcade.color.WHITE,
+            "border_width": 2,
+            "border_color": None,
+            "bg_color": (41, 39, 41),
+            
+            # used if button is pressed
+            "bg_color_pressed": (41, 39, 41),
+            "border_color_pressed": None,  # also used when hovered
+            "font_color_pressed": arcade.color.WHITE,
+        }
+
+        # Create a vertical BoxGroup to align buttons
+        self.v_box = arcade.gui.UIBoxLayout(vertical=True,space_between=20)
+        self.h_box_1 = arcade.gui.UIBoxLayout(vertical=False,space_between=10)
+        self.h_box_2 = arcade.gui.UIBoxLayout(vertical=False,space_between=10)
+
+        # Create the buttons
+        plus_zom_button = arcade.gui.UIFlatButton(text="+", width=50, style=default_style)
+        zom_button = arcade.gui.UIFlatButton(text=f"{constants.NUM_ZOMBIES} Zombies", width=200, style=none_style)
+        minus_zom_button = arcade.gui.UIFlatButton(text="-", width=50, style=default_style)
+        plus_hum_button = arcade.gui.UIFlatButton(text="+", width=50, style=default_style)
+        hum_button = arcade.gui.UIFlatButton(text=f"{constants.NUM_HUMANS} Humans", width=200, style=none_style)
+        minus_hum_button = arcade.gui.UIFlatButton(text="-", width=50, style=default_style)
+
+        save_button = arcade.gui.UIFlatButton(text="Save", width=200, style=default_style)
+
+        self.h_box_1.add(plus_zom_button)
+        self.h_box_1.add(zom_button)
+        self.h_box_1.add(minus_zom_button)
+        self.h_box_2.add(plus_hum_button)
+        self.h_box_2.add(hum_button)
+        self.h_box_2.add(minus_hum_button)
+
+        self.v_box.add(self.h_box_1)
+        self.v_box.add(self.h_box_2)
+        self.v_box.add(save_button)
+
+        plus_zom_button.on_click = self.on_click_zp
+        minus_zom_button.on_click = self.on_click_zm
+        plus_hum_button.on_click = self.on_click_hp
+        minus_hum_button.on_click = self.on_click_hm
+        save_button.on_click = self.on_click_save
+
+        # Create a widget to hold the v_box widget, that will center the buttons
+        self.manager.add(
+            arcade.gui.UIAnchorWidget(
+                anchor_x="center_x",
+                anchor_y="center_y",
+                child=self.v_box)
+        )
+
+    
+    def on_show_view(self):
+        """ This is run once when we switch to this view """
+        arcade.set_background_color(arcade.color.GRAY_BLUE)
+
+        # reset the viewport
+        arcade.set_viewport(0, self.window.width, 0, self.window.height)
+
+    def on_draw(self):
+        """ Draw this view """
+        self.clear()
+        self.manager.draw()
+    
+    def on_click_zp(self, event):
+        constants.NUM_ZOMBIES += 1
+        self.h_box_1.children[1].text = f"{constants.NUM_ZOMBIES} Zombies"
+    def on_click_zm(self, event):
+        constants.NUM_ZOMBIES -= 1
+        self.h_box_1.children[1].text = f"{constants.NUM_ZOMBIES} Zombies"
+    def on_click_hp(self, event):
+        constants.NUM_HUMANS += 1
+        self.h_box_2.children[1].text = f"{constants.NUM_HUMANS} Humans"
+    def on_click_hm(self, event):
+        constants.NUM_HUMANS -= 1
+        self.h_box_2.children[1].text = f"{constants.NUM_HUMANS} Humans"
+
+    def on_click_save(self, event):
+        start_view = MenuScreen()
+        window.show_view(start_view)
+        
 
 class GameOver(arcade.View):
     def __init__(self):
@@ -500,7 +661,7 @@ class GameOver(arcade.View):
         self.clear()
         arcade.draw_text("Game Over", self.window.width / 2, self.window.height / 2,
                          arcade.color.WHITE, font_size=50, anchor_x="center")
-        arcade.draw_text("Click to restart", self.window.width / 2, self.window.height / 2-75,
+        arcade.draw_text("Click to restart", self.window.width / 2, self.window.height / 2 - 75,
                          arcade.color.WHITE, font_size=20, anchor_x="center")
 
     def on_mouse_press(self, _x, _y, _button, _modifiers):
