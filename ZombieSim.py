@@ -332,7 +332,7 @@ class ZombieSim(arcade.View):
             if moving in self.zombies_list:
                 move_vector = moving.update_LoS_to_h(self)
                 moving.check_time += delta_time
-                if move_vector and moving.check_time > constants.CHECK_TIME and False:
+                if move_vector and moving.check_time > constants.CHECK_TIME:
                     # print(move_vector)
                     moving.check_time = 0.0
                     moving.path = arcade.astar_calculate_path(moving.position,move_vector,moving.bar_list,True)
