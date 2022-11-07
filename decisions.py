@@ -62,8 +62,22 @@ def makeHumanDecision(human, game):
     else:
         human.mood = Mood.RELAXED
 
-def makeInfectedDecision(infected):
-    pass # TODO
+def makeInfectedDecision(infected, game):
+    visibleItem = False
+    for item in game.items_list:
+        if arcade.has_line_of_sight(infected.position,item.position,game.walls_list,constants.HUMAN_VISION):
+            visibleItem = True
+            break
+    if infected.mood == Mood.RELAXED:
+        if visibleItem:
+            infected.mood = Mood.MOTIVATED
+        else:
+            pass # a* to random point?
+    if infected.mood == Mood.MOTIVATED:
+        if visibleItem:
+            pass # a* to item
+        else:
+            infected.mood = Mood.RELAXED
 
 def makeZombieDecision(zombie):
     if zombie.mood == Mood.RELAXED:
