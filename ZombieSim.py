@@ -68,12 +68,38 @@ class ZombieSim(arcade.View):
 
         # DEFAULT MAP WITHOUT ITEMS
         # for i in range(8):
-        #     if i == 3 or i == 4:
-        #         continue
-        #     walls += [Wall("images/vert.png", constants.SCALING/5, 200, 50*i+150)]
-        #     walls += [Wall("images/vert.png", constants.SCALING/5, 600, 50*i+150)]
-        #     walls += [Wall("images/horiz.png", constants.SCALING/5, 50*i+200, 100)]
-        #     walls += [Wall("images/horiz.png", constants.SCALING/5, 50*i+200, 500)]
+        #     if i < 3 or i > 4:
+        #         walls += [Wall("images/vert.png", constants.SCALING/5, 200, 50*i+150+constants.STATS_HEIGHT)]
+        #         walls += [Wall("images/vert.png", constants.SCALING/5, 600, 50*i+150+constants.STATS_HEIGHT)]
+        #         walls += [Wall("images/horiz.png", constants.SCALING/5, 50*i+200, 100+constants.STATS_HEIGHT)]
+        #         walls += [Wall("images/horiz.png", constants.SCALING/5, 50*i+200, 500+constants.STATS_HEIGHT)]
+        
+        # NEW MAP DESIGN
+        # for i in range(9):
+        #     for j in range(9):
+        #         vertWalls = [(0,0),(0,1),(0,2),(0,3),(0,4),(0,5),(0,6),(0,7),   # Left walls
+        #                      (8,0),(8,1),(8,2),(8,3),(8,5),(8,6),(8,7),    # Right walls
+        #                      (3,0),(5,0),
+        #                      (3,6),(3,7),
+        #                      (4,5),(4,6)
+        #                     ]
+        #         horizWalls = [(0,0),(1,0),(2,0),(5,0),(6,0),(7,0),
+        #                       (0,8),(1,8),(2,8),(3,8),(4,8),(5,8),(6,8),(7,8),
+        #                       (0,5),(1,5),(2,5),
+        #                       (4,5),(5,5),(7,5)
+        #                     ]
+        #         vertDoors = [(3,5),(4,7)]
+        #         horizDoors = [(6,5)]
+        #         if (i,j) in vertWalls:
+        #              walls += [Wall("images/vert.png", constants.SCALING/5, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
+        #         if (i,j) in horizWalls:
+        #             walls += [Wall("images/horiz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
+        #         if (i,j) in vertDoors:
+        #              walls += [Wall("images/dashVert.png", constants.SCALING/5, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
+        #         if (i,j) in horizDoors:
+        #             walls += [Wall("images/dashHoriz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
+
+
 
         # RANDOM MAP WITH ITEMS
         for i in range(9):
@@ -92,6 +118,7 @@ class ZombieSim(arcade.View):
                         walls += [Wall("images/dashHoriz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
                     else:
                         walls += [Wall("images/horiz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
+                
                 no_item = random.randint(0, constants.ITEM_GEN)
                 if not no_item and i != 8 and j != 8:
                     item_type = random.randint(0,3)    
