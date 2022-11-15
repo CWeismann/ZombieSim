@@ -74,51 +74,50 @@ class ZombieSim(arcade.View):
         #         walls += [Wall("images/horiz.png", constants.SCALING/5, 50*i+200, 100+constants.STATS_HEIGHT)]
         #         walls += [Wall("images/horiz.png", constants.SCALING/5, 50*i+200, 500+constants.STATS_HEIGHT)]
         
-        # NEW MAP DESIGN
-        # for i in range(9):
-        #     for j in range(9):
-        #         vertWalls = [(0,0),(0,1),(0,2),(0,3),(0,4),(0,5),(0,6),(0,7),   # Left walls
-        #                      (8,0),(8,1),(8,2),(8,3),(8,5),(8,6),(8,7),    # Right walls
-        #                      (3,0),(5,0),
-        #                      (3,6),(3,7),
-        #                      (4,5),(4,6)
-        #                     ]
-        #         horizWalls = [(0,0),(1,0),(2,0),(5,0),(6,0),(7,0),
-        #                       (0,8),(1,8),(2,8),(3,8),(4,8),(5,8),(6,8),(7,8),
-        #                       (0,5),(1,5),(2,5),
-        #                       (4,5),(5,5),(7,5)
-        #                     ]
-        #         vertDoors = [(3,5),(4,7)]
-        #         horizDoors = [(6,5)]
-        #         if (i,j) in vertWalls:
-        #              walls += [Wall("images/vert.png", constants.SCALING/5, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
-        #         if (i,j) in horizWalls:
-        #             walls += [Wall("images/horiz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
-        #         if (i,j) in vertDoors:
-        #              walls += [Wall("images/dashVert.png", constants.SCALING/5, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
-        #         if (i,j) in horizDoors:
-        #             walls += [Wall("images/dashHoriz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
-
-
-
-        # RANDOM MAP WITH ITEMS
         for i in range(9):
             for j in range(9):
-                no_wall = random.randint(0, constants.WALL_GEN)
-                no_door = random.randint(0, constants.DOOR_GEN)
-                if not no_wall and j != 8:
-                    if not no_door:
-                        walls += [Wall("images/dashVert.png", constants.SCALING/5, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
-                    else:
+                #PRESET
+                if constants.MAP_NUMBER:
+                    vertWalls = [(0,0),(0,1),(0,2),(0,3),(0,4),(0,5),(0,6),(0,7),   # Left walls
+                                (8,0),(8,1),(8,2),(8,3),(8,5),(8,6),(8,7),    # Right walls
+                                (3,0),(5,0),
+                                (3,6),(3,7),
+                                (4,5),(4,6)
+                                ]
+                    horizWalls = [(0,0),(1,0),(2,0),(5,0),(6,0),(7,0),
+                                (0,8),(1,8),(2,8),(3,8),(4,8),(5,8),(6,8),(7,8),
+                                (0,5),(1,5),(2,5),
+                                (4,5),(5,5),(7,5)
+                                ]
+                    vertDoors = [(3,5),(4,7)]
+                    horizDoors = [(6,5)]
+                    if (i,j) in vertWalls:
                         walls += [Wall("images/vert.png", constants.SCALING/5, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
-                no_wall = random.randint(0, constants.WALL_GEN)
-                no_door = random.randint(0, constants.DOOR_GEN)
-                if not no_wall and i != 8:
-                    if not no_door:
-                        walls += [Wall("images/dashHoriz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
-                    else:
+                    if (i,j) in horizWalls:
                         walls += [Wall("images/horiz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
+                    if (i,j) in vertDoors:
+                        walls += [Wall("images/dashVert.png", constants.SCALING/5, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
+                    if (i,j) in horizDoors:
+                        walls += [Wall("images/dashHoriz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
+
+                # RANDOM
+                else:
+                    no_wall = random.randint(0, constants.WALL_GEN)
+                    no_door = random.randint(0, constants.DOOR_GEN)
+                    if not no_wall and j != 8:
+                        if not no_door:
+                            walls += [Wall("images/dashVert.png", constants.SCALING/5, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
+                        else:
+                            walls += [Wall("images/vert.png", constants.SCALING/5, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
+                    no_wall = random.randint(0, constants.WALL_GEN)
+                    no_door = random.randint(0, constants.DOOR_GEN)
+                    if not no_wall and i != 8:
+                        if not no_door:
+                            walls += [Wall("images/dashHoriz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
+                        else:
+                            walls += [Wall("images/horiz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
                 
+                # ITEM GENERATION
                 no_item = random.randint(0, constants.ITEM_GEN)
                 if not no_item and i != 8 and j != 8:
                     item_type = random.randint(0,3)    
@@ -234,7 +233,7 @@ class ZombieSim(arcade.View):
                     self.make_human(zombie)
                     used_items += ["antidote"]
                 elif human.has_item("knife"):
-                    self.kill(zombie)
+                    self.destroy(zombie)
                     used_items += ["knife"]
                 else:
                     self.make_infected(human)
@@ -255,10 +254,10 @@ class ZombieSim(arcade.View):
                     self.make_human(infected)
                 elif infected.has_item("knife"):
                     infected.use_items(["knife"])
-                    self.kill(infected)
+                    self.destroy(infected)
                 elif infected.has_item("gun"):
                     infected.use_items(["gun"])
-                    self.kill(infected)
+                    self.destroy(infected)
                 else:
                     self.make_zombie(infected)
         # Check if infected can pick up an item
@@ -473,7 +472,7 @@ class ZombieSim(arcade.View):
             game_over_view = MenuScreen()
             self.window.show_view(game_over_view)
 
-    def kill(self, killed):
+    def destroy(self, killed):
         if killed in self.humans_list:
             self.humans_list.remove(killed)
         if killed in self.infected_list:
@@ -600,6 +599,7 @@ class Settings(arcade.View):
         self.v_box = arcade.gui.UIBoxLayout(vertical=True,space_between=20)
         self.h_box_1 = arcade.gui.UIBoxLayout(vertical=False,space_between=10)
         self.h_box_2 = arcade.gui.UIBoxLayout(vertical=False,space_between=10)
+        self.h_box_3 = arcade.gui.UIBoxLayout(vertical=False,space_between=10)
 
         # Create the buttons
         
@@ -610,6 +610,10 @@ class Settings(arcade.View):
         minus_hum_button = arcade.gui.UIFlatButton(text="-", width=50, style=default_style)
         hum_button = arcade.gui.UIFlatButton(text=f"{constants.NUM_HUMANS} Humans", width=200, style=none_style)
         plus_hum_button = arcade.gui.UIFlatButton(text="+", width=50, style=default_style)
+
+        prev_map_button = arcade.gui.UIFlatButton(text="<", width=50, style=default_style)
+        map_button = arcade.gui.UIFlatButton(text=f"RANDOM", width=200, style=none_style)
+        next_map_button = arcade.gui.UIFlatButton(text=">", width=50, style=default_style)
         
 
         save_button = arcade.gui.UIFlatButton(text="Save", width=200, style=default_style)
@@ -621,16 +625,24 @@ class Settings(arcade.View):
         self.h_box_2.add(minus_hum_button)
         self.h_box_2.add(hum_button)
         self.h_box_2.add(plus_hum_button)
+        self.h_box_3.add(prev_map_button)
+        self.h_box_3.add(map_button)
+        self.h_box_3.add(next_map_button)
 
         # v_box holds the two horizontal boxes and save button
         self.v_box.add(self.h_box_1)
         self.v_box.add(self.h_box_2)
+        self.v_box.add(self.h_box_3)
         self.v_box.add(save_button)
 
         plus_zom_button.on_click = self.on_click_zp
         minus_zom_button.on_click = self.on_click_zm
         plus_hum_button.on_click = self.on_click_hp
         minus_hum_button.on_click = self.on_click_hm
+
+        next_map_button.on_click = self.on_click_mn
+        prev_map_button.on_click = self.on_click_mp
+
         save_button.on_click = self.on_click_save
 
         # Create a widget to hold the v_box widget, that will center the buttons
@@ -670,6 +682,19 @@ class Settings(arcade.View):
         """ Decrements the number of humans """
         constants.NUM_HUMANS -= 1
         self.h_box_2.children[1].text = f"{constants.NUM_HUMANS} Humans"
+
+    def on_click_mn(self, event):
+        constants.MAP_NUMBER = (constants.MAP_NUMBER + 1) % constants.TOTAL_MAPS
+        if constants.MAP_NUMBER:
+            self.h_box_3.children[1].text = f"MAP {constants.MAP_NUMBER}"
+        else:
+            self.h_box_3.children[1].text = f"RANDOM"
+    def on_click_mp(self, event):
+        constants.MAP_NUMBER = (constants.MAP_NUMBER - 1) % constants.TOTAL_MAPS
+        if constants.MAP_NUMBER:
+            self.h_box_3.children[1].text = f"MAP {constants.MAP_NUMBER}"
+        else:
+            self.h_box_3.children[1].text = f"RANDOM"
 
     def on_click_save(self, event):
         """ Returns to the start window """

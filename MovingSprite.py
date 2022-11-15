@@ -150,7 +150,7 @@ class MovingSprite(arcade.Sprite):
             if arcade.has_line_of_sight(self.position, zom.position, game.walls_list, int(constants.HUMAN_VISION * (int(zom.speed_state)/1.5)), 2):
                 if self.has_item("gun"):
                     self.use_items(["gun"])
-                    game.kill(zom)
+                    game.destroy(zom)
                 zom_close = True
                 xcoords.append(zom.center_x)
                 ycoords.append(zom.center_y)
