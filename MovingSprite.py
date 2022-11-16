@@ -58,24 +58,27 @@ class MovingSprite(arcade.Sprite):
             align = "center"
         )
         
+        # SPEEDSTATE TEMPORARILY DISABLED
+        self.sprite_speed = 0
+
         self.base_speed = 0 # speed before modifiers
-        self.speed_state = SPEEDSTATE.WALK
-        self.sprite_speed = int(self.speed_state) * self.base_speed
+        # self.speed_state = SPEEDSTATE.WALK
+        # self.sprite_speed = int(self.speed_state) * self.base_speed
 
         self.bar_list = arcade.AStarBarrierList(self, game.walls_list, 50, 0, constants.SCREEN_WIDTH, constants.STATS_HEIGHT, constants.SCREEN_HEIGHT)
 
     # Texture changes for role changes
     def become_human(self):
         self.texture = self.human_texture
-        self.set_speed_state(SPEEDSTATE.WALK)
+        # self.set_speed_state(SPEEDSTATE.WALK)
 
     def become_infected(self):
         self.texture = self.infected_texture
-        self.set_speed_state(SPEEDSTATE.CRAWL)
+        # self.set_speed_state(SPEEDSTATE.CRAWL)
 
     def become_zombie(self):
         self.texture = self.zombie_texture
-        self.set_speed_state(SPEEDSTATE.WALK)
+        # self.set_speed_state(SPEEDSTATE.WALK)
 
     def become_dead(self):
         self.velocity = (0,0)
@@ -147,7 +150,9 @@ class MovingSprite(arcade.Sprite):
         ycoords = []
         zom_close = False
         for zom in game.zombies_list:
-            if arcade.has_line_of_sight(self.position, zom.position, game.walls_list, int(constants.HUMAN_VISION * (int(zom.speed_state)/1.5)), 2):
+            # SPEEDSTATE TEMPORARILY DISABLED
+            if arcade.has_line_of_sight(self.position, zom.position, game.walls_list, constants.HUMAN_VISION, 2):
+            # if arcade.has_line_of_sight(self.position, zom.position, game.walls_list, int(constants.HUMAN_VISION * (int(zom.speed_state)/1.5)), 2):
                 if self.has_item("gun"):
                     self.use_items(["gun"])
                     game.destroy(zom)
@@ -169,15 +174,18 @@ class MovingSprite(arcade.Sprite):
                 move_vect = -vect[0]/(vect_len), -vect[1]/(vect_len)
             return move_vect # returns a normalized vector of the direction to move
         else:
-            self.set_speed_state(SPEEDSTATE.WALK)
+            # self.set_speed_state(SPEEDSTATE.WALK)
+            pass
 
     def update_LoS_to_h(self, game):
         visible_hums = arcade.SpriteList()
         for hum in game.humans_list:
-            if arcade.has_line_of_sight(self.position, hum.position, game.walls_list, int(constants.ZOMBIE_VISION * (int(hum.speed_state)/1.5)), 2):
+            # SPEEDSTATE TEMPORARILY DISABLED
+            if arcade.has_line_of_sight(self.position, hum.position, game.walls_list, constants.ZOMBIE_VISION, 2):
+            # if arcade.has_line_of_sight(self.position, hum.position, game.walls_list, int(constants.ZOMBIE_VISION * (int(hum.speed_state)/1.5)), 2):
                 visible_hums.append(hum)
         if len(visible_hums) > 0:
-            self.set_speed_state(SPEEDSTATE.RUN)
+            # self.set_speed_state(SPEEDSTATE.RUN)
             nearest_hum, dist_to_nh = arcade.get_closest_sprite(self, visible_hums)
             return (nearest_hum.center_x, nearest_hum.center_y)
             vect = (nearest_hum.center_x - self.center_x, nearest_hum.center_y - self.center_y)
@@ -186,7 +194,8 @@ class MovingSprite(arcade.Sprite):
             return move_vect
         else:
             # print("walkin'")
-            self.set_speed_state(SPEEDSTATE.WALK)
+            # self.set_speed_state(SPEEDSTATE.WALK)
+            pass
 
     def update_LoS_to_i(self, game):
         visible_items = arcade.SpriteList()

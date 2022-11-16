@@ -222,8 +222,12 @@ class ZombieSim(arcade.View):
             if moving.has_item("knife"):
                 items += "Kn"
 
+            # SPEEDSTATE TEMPORARILY DISABLED
             spacing = (mcount-0.5)*constants.SCREEN_WIDTH/(constants.NUM_HUMANS + constants.NUM_ZOMBIES)
-            moving.set_stat_text(f"Person {mcount}: {status}\nTime Survived: {moving.get_human_time()}\nSpeed: {moving.base_speed:1.1f}\nItems: {items}", spacing)
+            sprite_vel = moving.velocity
+            moving.sprite_speed = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
+            moving.set_stat_text(f"Person {mcount}: {status}\nTime Survived: {moving.get_human_time()}\nSpeed: {moving.sprite_speed:1.1f}\nItems: {items}", spacing)
+            # moving.set_stat_text(f"Person {mcount}: {status}\nTime Survived: {moving.get_human_time()}\nSpeed: {moving.base_speed:1.1f}\nItems: {items}", spacing)
 
         for human in self.humans_list:
             human.inc_human_time(delta_time)
