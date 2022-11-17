@@ -3,14 +3,14 @@ import arcade
 import math
 from enum import IntEnum
 
-class SPEEDSTATE(IntEnum):
-    '''
-    Enum for the speed state of the sprite.
-    '''
+# class SPEEDSTATE(IntEnum):
+#     '''
+#     Enum for the speed state of the sprite.
+#     '''
 
-    CRAWL = 1
-    WALK = 2
-    RUN = 3
+#     CRAWL = 1
+#     WALK = 2
+#     RUN = 3
 
 class Mood(IntEnum):
     RELAXED = 1
@@ -65,7 +65,7 @@ class MovingSprite(arcade.Sprite):
         # self.speed_state = SPEEDSTATE.WALK
         # self.sprite_speed = int(self.speed_state) * self.base_speed
 
-        self.bar_list = arcade.AStarBarrierList(self, game.walls_list, 50, 0, constants.SCREEN_WIDTH, constants.STATS_HEIGHT, constants.SCREEN_HEIGHT)
+        self.bar_list = arcade.AStarBarrierList(self, game.walls_list, 25, 0, constants.SCREEN_WIDTH, constants.STATS_HEIGHT, constants.SCREEN_HEIGHT)
 
     # Texture changes for role changes
     def become_human(self):
@@ -160,7 +160,7 @@ class MovingSprite(arcade.Sprite):
                 xcoords.append(zom.center_x)
                 ycoords.append(zom.center_y)
         if zom_close:
-            self.set_speed_state(SPEEDSTATE.RUN)
+            # self.set_speed_state(SPEEDSTATE.RUN)
             x_avg = sum(xcoords)/len(xcoords)
             y_avg = sum(ycoords)/len(ycoords)
             ##
@@ -187,7 +187,7 @@ class MovingSprite(arcade.Sprite):
         if len(visible_hums) > 0:
             # self.set_speed_state(SPEEDSTATE.RUN)
             nearest_hum, dist_to_nh = arcade.get_closest_sprite(self, visible_hums)
-            return (nearest_hum.center_x, nearest_hum.center_y)
+            # return (nearest_hum.center_x, nearest_hum.center_y)
             vect = (nearest_hum.center_x - self.center_x, nearest_hum.center_y - self.center_y)
             vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
             move_vect = vect[0]/(vect_len), vect[1]/(vect_len)
@@ -204,11 +204,20 @@ class MovingSprite(arcade.Sprite):
                 visible_items.append(item)
         if visible_items:
             nearest_item, dist_to_ni = arcade.get_closest_sprite(self, visible_items)
+            return (nearest_item.center_x, nearest_item.center_y)
             vect = (nearest_item.center_x - self.center_x, nearest_item.center_y - self.center_y)
             vect_len = math.sqrt(vect[0]**2 + vect[1]**2)
             move_vect = vect[0]/(vect_len), vect[1]/(vect_len)
             return move_vect
 
+    def update_LoS_to_door(self, game):
+        visible_doors = arcade.SpriteList()
+        for door in game.doors_list:
+            if arcade.has_line_of_sight(self.position, door.position, game.walls_list, constants.HUMAN_VISION, 2):
+                visible_doors.append(door)
+        if visible_doors:
+            nearest_door, dist_to_ni = arcade.get_closest_sprite(self, visible_doors)
+            return (nearest_door.center_x, nearest_door.center_y)
 
     # Returns the current texture of the sprite
     def get_texture(self):

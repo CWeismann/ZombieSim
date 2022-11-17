@@ -26,6 +26,8 @@ class ZombieSim(arcade.View):
         self.humans_list = arcade.SpriteList()
         self.moving_list = arcade.SpriteList()
         self.walls_list = arcade.SpriteList(use_spatial_hash=True)
+        self.only_walls_list = arcade.SpriteList(use_spatial_hash=True)
+        self.doors_list = arcade.SpriteList(use_spatial_hash=True)
         self.items_list = arcade.SpriteList()
         self.all_sprites = arcade.SpriteList()
 
@@ -64,6 +66,7 @@ class ZombieSim(arcade.View):
                 
         # Initialize Walls
         walls = []
+        doors = []
         items = []
 
         # DEFAULT MAP WITHOUT ITEMS
@@ -99,9 +102,9 @@ class ZombieSim(arcade.View):
                     if (i,j) in horizWalls:
                         walls += [Wall("images/horiz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
                     if (i,j) in vertDoors:
-                        walls += [Wall("images/dashVert.png", constants.SCALING/5, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
+                        doors += [Wall("images/dashVert.png", constants.SCALING/5, 50*i+200, 50*j+150 + constants.STATS_HEIGHT)]
                     if (i,j) in horizDoors:
-                        walls += [Wall("images/dashHoriz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
+                        doors += [Wall("images/dashHoriz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
 
                 # RANDOM
                 else:
@@ -116,9 +119,9 @@ class ZombieSim(arcade.View):
                     no_door = random.randint(0, constants.DOOR_GEN)
                     if not no_wall and i != 8:
                         if not no_door:
-                            walls += [Wall("images/dashHoriz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
+                            doors += [Wall("images/dashHoriz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
                         else:
-                            walls += [Wall("images/horiz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
+                            doors += [Wall("images/horiz.png", constants.SCALING/5, 50*i+200, 50*j+100 + constants.STATS_HEIGHT)]
                 
                 # ITEM GENERATION
                 no_item = random.randint(0, constants.ITEM_GEN)
@@ -141,8 +144,14 @@ class ZombieSim(arcade.View):
                     
         
         for wall in walls:
+            self.only_walls_list.append(wall)
             self.walls_list.append(wall)
             self.all_sprites.append(wall)
+
+        for door in doors:
+            self.doors_list.append(door)
+            self.walls_list.append(door)
+            self.all_sprites.append(door)
 
                 # Initialize Zombies
         zombies = []
@@ -343,6 +352,37 @@ class ZombieSim(arcade.View):
                 move_vector_z = moving.update_LoS_to_z(self)
                 # DIRECTIONAL HANDLING CHANGES - BUGGY vvv
                 if move_vector_z:
+                    move_vector_i = None
+
+                    #
+                    # moving.check_time += delta_time
+                    # move_vector_d = None
+                    # if moving.check_time > constants.CHECK_TIME:
+                    #     moving.check_time = 0.0
+                    #     move_vector_d = moving.update_LoS_to_door(self)
+                    # if not move_vector_d:
+                    #     moving.path = None
+                    # if move_vector_d:
+                    #     moving.path = arcade.astar_calculate_path(moving.position,move_vector_d,moving.bar_list,True)
+                    #     # if moving.path:
+                    #     #     moving.path.pop(0)
+                    # if moving.path and len(moving.path):
+                    #     if math.sqrt((moving.center_x-moving.path[0][0])**2 + ((moving.center_y-moving.path[0][1])**2)) <= 30:
+                    #         moving.path = moving.path[1:]
+                    #     if moving.path:
+                    #         x,y = moving.path[0]
+                    #     elif move_vector_d:
+                    #         x,y = move_vector_d
+                    #     else:
+                    #         continue
+                    #     vect = (x - moving.center_x, y - moving.center_y)
+                    #     angle = math.atan2(vect[1], vect[0])
+                    #     change_x = math.cos(angle) * moving.sprite_speed
+                    #     change_y = math.sin(angle) * moving.sprite_speed
+                    #     vect_len = math.sqrt(change_x**2 + change_y**2)
+                    #     moving.velocity = (change_x/(vect_len))*moving.sprite_speed, (change_y/(vect_len))*moving.sprite_speed
+                    #
+                    # else:
                     xvel = moving.velocity[0]
                     yvel = moving.velocity[1]
                     if not hit_edge_x and not hit_wall_x:
@@ -351,33 +391,67 @@ class ZombieSim(arcade.View):
                         yvel = move_vector_z[1]*constants.HUMAN_SPEED_MIN
                     v_len = math.sqrt(xvel**2 + yvel**2)
                     moving.velocity = (xvel/v_len)*moving.sprite_speed, (yvel/v_len)*moving.sprite_speed
-                
-                
 
                 # MOVE TOWARDS ITEMS - BUGGY
-                # else:
-                #     move_vector_i = moving.update_LoS_to_i(self)
-                #     if move_vector_i and not struck_wall and not hit_edge:
-                #         moving.velocity = (move_vector_i[0]*constants.SPEED-constants.SPEED/2), (move_vector_i[1]*constants.SPEED-constants.SPEED/2)
-                #         v_len = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
-                #         moving.velocity = (moving.velocity[0]/v_len)*moving.sprite_speed, (moving.velocity[1]/v_len)*moving.sprite_speed
+                else:
+                    # move_vector_i = moving.update_LoS_to_i(self)
+                    # if move_vector_i and not (struck_wall or hit_edge_x or hit_edge_y):
+                    #     moving.velocity = (move_vector_i[0]*constants.SPEED-constants.SPEED/2), (move_vector_i[1]*constants.SPEED-constants.SPEED/2)
+                    #     v_len = math.sqrt(moving.velocity[0]**2 + moving.velocity[1]**2)
+                    #     moving.velocity = (moving.velocity[0]/v_len)*moving.sprite_speed, (moving.velocity[1]/v_len)*moving.sprite_speed
+                    move_vector_i = moving.update_LoS_to_i(self)
+                    moving.check_time += delta_time
+                    if not move_vector_i:
+                        moving.path = None
+                    if move_vector_i and moving.check_time > constants.CHECK_TIME:
+                        moving.check_time = 0.0
+                        moving.path = arcade.astar_calculate_path(moving.position,move_vector_i,moving.bar_list,True)
+                        # if moving.path:
+                        #     moving.path.pop(0)
+                    if moving.path and len(moving.path):
+                        if math.sqrt((moving.center_x-moving.path[0][0])**2 + ((moving.center_y-moving.path[0][1])**2)) <= 30:
+                            moving.path = moving.path[1:]
+                        if moving.path:
+                            x,y = moving.path[0]
+                        elif move_vector_i:
+                            x,y = move_vector_i
+                        else:
+                            continue
+                        vect = (x - moving.center_x, y - moving.center_y)
+                        angle = math.atan2(vect[1], vect[0])
+                        change_x = math.cos(angle) * moving.sprite_speed
+                        change_y = math.sin(angle) * moving.sprite_speed
+                        vect_len = math.sqrt(change_x**2 + change_y**2)
+                        moving.velocity = (change_x/(vect_len))*moving.sprite_speed, (change_y/(vect_len))*moving.sprite_speed
+                    # move towards items when very close
+                    # elif move_vector:
+                    #     xvel = moving.velocity[0]
+                    #     yvel = moving.velocity[1]
+                    #     if not hit_edge_x and not hit_wall_x:
+                    #         xvel = move_vector[0]*constants.HUMAN_SPEED_MIN
+                    #     if not hit_edge_y and not hit_wall_y:
+                    #         yvel = move_vector[1]*constants.HUMAN_SPEED_MIN
+                    #     v_len = math.sqrt(xvel**2 + yvel**2)
+                    #     moving.velocity = (xvel/v_len)*moving.sprite_speed, (yvel/v_len)*moving.sprite_speed
 
             # Zombie check for humans to move towards/away from
             if moving in self.zombies_list:
                 move_vector = moving.update_LoS_to_h(self)
                 moving.check_time += delta_time
-                if move_vector and moving.check_time > constants.CHECK_TIME:
+                if move_vector and moving.check_time > constants.CHECK_TIME and False:
                     # print(move_vector)
                     moving.check_time = 0.0
                     moving.path = arcade.astar_calculate_path(moving.position,move_vector,moving.bar_list,True)
-                    print(moving.path)
+                    # print(moving.path)
                     if moving.path:
                         moving.path.pop(0)
                     # print(move_vector)
                     # print(moving.position)
                     # print(moving.path)
+                elif not move_vector:
+                    moving.path = None
 
-                if moving.path and len(moving.path) > 1:
+                if moving.path and len(moving.path) > 1 and False:
                     if math.sqrt((moving.center_x-moving.path[0][0])**2 + ((moving.center_y-moving.path[0][1])**2)) <= 30:
                         # print("SWITCH")
                         moving.path = moving.path[1:]
@@ -397,16 +471,16 @@ class ZombieSim(arcade.View):
                     vect_len = math.sqrt(change_x**2 + change_y**2)
                     
                     moving.velocity = (change_x/(vect_len))*moving.sprite_speed, (change_y/(vect_len))*moving.sprite_speed
-                # CURRENTLY DISABLED- move towards humans when very close
-                elif move_vector and False:
+                # CURRENT DEFAULT- move towards humans when very close
+                elif move_vector:
                     xvel = moving.velocity[0]
                     yvel = moving.velocity[1]
                     if not hit_edge_x and not hit_wall_x:
-                        xvel = move_vector[0]*constants.ZOMBIE_SPEED_MIN
+                        xvel = move_vector[0]*constants.HUMAN_SPEED_MIN
                     if not hit_edge_y and not hit_wall_y:
-                        yvel = move_vector[1]*constants.ZOMBIE_SPEED_MIN
+                        yvel = move_vector[1]*constants.HUMAN_SPEED_MIN
                     v_len = math.sqrt(xvel**2 + yvel**2)
-                    moving.velocity = -(xvel/v_len)*moving.sprite_speed, -(yvel/v_len)*moving.sprite_speed
+                    moving.velocity = (xvel/v_len)*moving.sprite_speed, (yvel/v_len)*moving.sprite_speed
             
 
 
@@ -453,6 +527,10 @@ class ZombieSim(arcade.View):
         new_human.base_speed = math.sqrt(velocity[0]**2 + velocity[1]**2)
         new_human.reset_infection_time()
         self.humans_list.append(new_human)
+        if len(self.zombies_list) == 0:
+            print("GAME OVER - HUMANS WIN")
+            game_over_view = MenuScreen()
+            self.window.show_view(game_over_view)
 
     def make_infected(self, new_infected):
         """

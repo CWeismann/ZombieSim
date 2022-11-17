@@ -22,7 +22,7 @@ ITEM_GEN = 10 # larger value = fewer items; SUGGESTED: 10
 
 WALL_LENGTH = SCALING * 10 # May be inaccurate - testing needed
 
-CHECK_TIME = 0.5 # how often a* is recalculated
+CHECK_TIME = 1.0 # how often a* is recalculated
 
 MAP_NUMBER = 0
 TOTAL_MAPS = 2
