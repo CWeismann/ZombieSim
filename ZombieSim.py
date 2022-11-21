@@ -787,47 +787,54 @@ class Settings(arcade.View):
         window.show_view(start_view)
         
 
-# class GameOver(arcade.View):
-#     def __init__(self):
-#         """ This is run once when we switch to this view """
-#         super().__init__()
+class GameOver(arcade.View):
+    def __init__(self, winner):
+        """ This is run once when we switch to this view """
+        super().__init__()
+        self.winner = winner
 
-#         # Reset the viewport
-#         arcade.set_viewport(0, constants.SCREEN_WIDTH - 1, 0, constants.STATS_HEIGHT + constants.SCREEN_HEIGHT - 1)
+        # Reset the viewport
+        arcade.set_viewport(0, constants.SCREEN_WIDTH - 1, 0, constants.STATS_HEIGHT + constants.SCREEN_HEIGHT - 1)
 
-#     def on_draw(self):
-#         """ Draw this view """
-#         self.clear()
-#         arcade.draw_text("Game Over", self.window.width / 2, self.window.height / 2,
-#                          arcade.color.WHITE, font_size=50, anchor_x="center")
-#         arcade.draw_text("Press any key to restart", self.window.width / 2, self.window.height / 2 - 75,
-#                          arcade.color.WHITE, font_size=20, anchor_x="center")
+    def on_draw(self):
+        """ Draw this view """
+        self.clear()
+        arcade.draw_text("Game Over", self.window.width / 2, self.window.height / 2,
+                         arcade.color.WHITE, font_size=50, anchor_x="center")
+        if self.winner == "humans":
+            pass
+        elif self.winner == "zombies":
+            pass
+        else:
+            pass
+        arcade.draw_text("Press any key to restart", self.window.width / 2, self.window.height / 2 - 75,
+                         arcade.color.WHITE, font_size=20, anchor_x="center")
 
-#     def on_show_view(self):
-#         arcade.set_background_color(arcade.color.GRAY_BLUE)
+    def on_show_view(self):
+        arcade.set_background_color(arcade.color.GRAY_BLUE)
 
-#         # reset the viewport
-#         arcade.set_viewport(0, self.window.width, 0, self.window.height)
+        # reset the viewport
+        arcade.set_viewport(0, self.window.width, 0, self.window.height)
 
-#     def on_key_press(self, symbol: int, modifiers: int):
-#         """ If the user presses any key, restart the simulation. """
-#         start_view = MenuScreen()
-#         self.window.show_view(start_view)
+    def on_key_press(self, symbol: int, modifiers: int):
+        """ If the user presses any key, restart the simulation. """
+        start_view = MenuScreen()
+        self.window.show_view(start_view)
 
-# class DelayView(arcade.View):
-#     def __init__(self):
-#         super().__init__()
+class DelayView(arcade.View):
+    def __init__(self):
+        super().__init__()
 
-#         # Reset the viewport
-#         arcade.set_viewport(0, constants.SCREEN_WIDTH - 1, 0, constants.STATS_HEIGHT + constants.SCREEN_HEIGHT - 1)
+        # Reset the viewport
+        arcade.set_viewport(0, constants.SCREEN_WIDTH - 1, 0, constants.STATS_HEIGHT + constants.SCREEN_HEIGHT - 1)
 
-#     def on_show_view(self):
-#         arcade.set_background_color(arcade.color.GRAY_BLUE)
-#         # reset the viewport
-#         arcade.set_viewport(0, self.window.width, 0, self.window.height)
-#         time.sleep(1)
-#         start_view = MenuScreen()
-#         self.window.show_view(start_view)
+    def on_show_view(self):
+        arcade.set_background_color(arcade.color.GRAY_BLUE)
+        # reset the viewport
+        arcade.set_viewport(0, self.window.width, 0, self.window.height)
+        time.sleep(1)
+        start_view = MenuScreen()
+        self.window.show_view(start_view)
 
 if __name__ == "__main__":
     window = arcade.Window(constants.SCREEN_WIDTH,constants.SCREEN_HEIGHT+constants.STATS_HEIGHT,constants.SCREEN_TITLE)
