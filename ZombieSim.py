@@ -792,6 +792,33 @@ class GameOver(arcade.View):
         """ This is run once when we switch to this view """
         super().__init__()
         self.winner = winner
+        self.manager = arcade.gui.UIManager()
+        self.manager.enable()
+
+        # real button
+        default_style = {
+            "font_name": ("Kenney Pixel Square", "calibri", "arial"),
+            "font_size": 15,
+            "font_color": arcade.color.WHITE,
+            "border_width": 2,
+            "border_color": None,
+            "bg_color": (21, 19, 21),
+
+            # used if button is pressed
+            "bg_color_pressed": arcade.color.WHITE,
+            "border_color_pressed": arcade.color.WHITE,  # also used when hovered
+            "font_color_pressed": arcade.color.BLACK,
+        }
+        self.v_box = arcade.gui.UIBoxLayout(vertical=True,space_between=20)
+        restart_button = arcade.gui.UIFlatButton(text="Restart", width=200, style=default_style)
+        restart_button.on_click = on_click_restart
+        self.v_box.add(restart_button)
+        self.manager.add(
+            arcade.gui.UIAnchorWidget(
+                anchor_x="center_x",
+                anchor_y="center_y",
+                child=self.v_box)
+        )
 
         # Reset the viewport
         arcade.set_viewport(0, constants.SCREEN_WIDTH - 1, 0, constants.STATS_HEIGHT + constants.SCREEN_HEIGHT - 1)
@@ -816,7 +843,7 @@ class GameOver(arcade.View):
         # reset the viewport
         arcade.set_viewport(0, self.window.width, 0, self.window.height)
 
-    def on_key_press(self, symbol: int, modifiers: int):
+    def on_click_restart(self, event):
         """ If the user presses any key, restart the simulation. """
         start_view = MenuScreen()
         self.window.show_view(start_view)
