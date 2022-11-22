@@ -63,6 +63,7 @@ class ZombieSim(arcade.View):
         """
         arcade.set_background_color(arcade.color.WHITE)
         self.total_time = 0.0
+        self.check_end_time = 0.0
                 
         # Initialize Walls
         walls = []
@@ -203,12 +204,28 @@ class ZombieSim(arcade.View):
         """
 
         self.total_time += delta_time
+        self.check_end_time += delta_time
         minutes = int(self.total_time) // 60
         seconds = int(self.total_time) % 60
         centiss = int((self.total_time - minutes*60 - seconds)*100)
         self.timer_text.text = f"{minutes:02d}:{seconds:02d}.{centiss:02d}"
         self.score_text.text = f"{len(self.humans_list)+len(self.infected_list)} Humans vs. {len(self.zombies_list)} Zombies"
         
+        if self.check_end_time >= 5:
+            self.check_end_time = 0
+            if len(self.zombies_list) == 0:
+                print("GAME OVER - HUMANS WIN")
+                game_over_view = GameOver("humans")
+                self.window.show_view(game_over_view)
+            elif len(self.humans_list) == 0 and len(self.infected_list) == 0:
+                print("GAME OVER - ZOMBIES WIN")
+                game_over_view = GameOver("zombies")
+                self.window.show_view(game_over_view)
+            elif self.total_time >= 300:    # end after five minutes
+                print("GAME OVER - DRAW")
+                game_over_view = GameOver("draw")
+                self.window.show_view(game_over_view)
+
         mcount = 0
         for moving in self.moving_list:
             mcount += 1
@@ -527,10 +544,10 @@ class ZombieSim(arcade.View):
         new_human.base_speed = math.sqrt(velocity[0]**2 + velocity[1]**2)
         new_human.reset_infection_time()
         self.humans_list.append(new_human)
-        if len(self.zombies_list) == 0:
-            print("GAME OVER - HUMANS WIN")
-            game_over_view = MenuScreen()
-            self.window.show_view(game_over_view)
+        # if len(self.zombies_list) == 0:
+        #     print("GAME OVER - HUMANS WIN")
+        #     game_over_view = MenuScreen()
+        #     self.window.show_view(game_over_view)
 
     def make_infected(self, new_infected):
         """
@@ -552,10 +569,10 @@ class ZombieSim(arcade.View):
         velocity = (oldvel[0]-constants.HUMAN_SPEED_MIN+constants.ZOMBIE_SPEED_MIN, oldvel[1]-constants.HUMAN_SPEED_MIN+constants.ZOMBIE_SPEED_MIN)
         new_zombie.base_speed = math.sqrt(velocity[0]**2 + velocity[1]**2)
         self.zombies_list.append(new_zombie)  
-        if len(self.humans_list) == 0 and len(self.infected_list) == 0:
-            print("GAME OVER - ZOMBIES WIN")
-            game_over_view = MenuScreen()
-            self.window.show_view(game_over_view)
+        # if len(self.humans_list) == 0 and len(self.infected_list) == 0:
+        #     print("GAME OVER - ZOMBIES WIN")
+        #     game_over_view = MenuScreen()
+        #     self.window.show_view(game_over_view)
 
     def destroy(self, killed):
         if killed in self.humans_list:
@@ -565,10 +582,10 @@ class ZombieSim(arcade.View):
         if killed in self.zombies_list:
             self.zombies_list.remove(killed)
         killed.become_dead()
-        if len(self.zombies_list) == 0:
-            print("GAME OVER - HUMANS WIN")
-            game_over_view = MenuScreen()
-            self.window.show_view(game_over_view)
+        # if len(self.zombies_list) == 0:
+        #     print("GAME OVER - HUMANS WIN")
+        #     game_over_view = MenuScreen()
+        #     self.window.show_view(game_over_view)
         # self.moving_list.remove(killed)
         #self.all_sprites.remove(killed)
 
@@ -646,6 +663,7 @@ class MenuScreen(arcade.View):
 class Settings(arcade.View):
     def __init__(self):
         """ This is run once when we switch to this view """
+        
         super().__init__()
 
         self.manager = arcade.gui.UIManager()
@@ -665,6 +683,7 @@ class Settings(arcade.View):
             "border_color_pressed": arcade.color.WHITE,  # also used when hovered
             "font_color_pressed": arcade.color.BLACK,
         }
+
         # fake button for labeling
         none_style = {
             "font_name": ("calibri", "arial"),
@@ -754,18 +773,26 @@ class Settings(arcade.View):
     def on_click_zp(self, event):
         """ Increments the number of zombies """
         constants.NUM_ZOMBIES += 1
+        if constants.NUM_ZOMBIES > 10:
+            constants.NUM_ZOMBIES = 10
         self.h_box_1.children[1].text = f"{constants.NUM_ZOMBIES} Zombies"
     def on_click_zm(self, event):
         """ Decrements the number of zombies """
         constants.NUM_ZOMBIES -= 1
+        if constants.NUM_ZOMBIES < 0:
+            constants.NUM_ZOMBIES = 0
         self.h_box_1.children[1].text = f"{constants.NUM_ZOMBIES} Zombies"
     def on_click_hp(self, event):
         """ Increments the number of humans """
         constants.NUM_HUMANS += 1
+        if constants.NUM_HUMANS > 10:
+            constants.NUM_HUMANS = 10
         self.h_box_2.children[1].text = f"{constants.NUM_HUMANS} Humans"
     def on_click_hm(self, event):
         """ Decrements the number of humans """
         constants.NUM_HUMANS -= 1
+        if constants.NUM_HUMANS < 0:
+            constants.NUM_HUMANS = 0
         self.h_box_2.children[1].text = f"{constants.NUM_HUMANS} Humans"
 
     def on_click_mn(self, event):
@@ -792,6 +819,7 @@ class GameOver(arcade.View):
         """ This is run once when we switch to this view """
         super().__init__()
         self.winner = winner
+
         self.manager = arcade.gui.UIManager()
         self.manager.enable()
 
@@ -809,10 +837,16 @@ class GameOver(arcade.View):
             "border_color_pressed": arcade.color.WHITE,  # also used when hovered
             "font_color_pressed": arcade.color.BLACK,
         }
+
         self.v_box = arcade.gui.UIBoxLayout(vertical=True,space_between=20)
         restart_button = arcade.gui.UIFlatButton(text="Restart", width=200, style=default_style)
-        restart_button.on_click = on_click_restart
+        end_text = arcade.gui.UILabel(width=200,style=default_style)
+
         self.v_box.add(restart_button)
+        self.v_box.add(end_text)
+
+        restart_button.on_click = self.on_click_restart
+        
         self.manager.add(
             arcade.gui.UIAnchorWidget(
                 anchor_x="center_x",
@@ -820,48 +854,49 @@ class GameOver(arcade.View):
                 child=self.v_box)
         )
 
-        # Reset the viewport
-        arcade.set_viewport(0, constants.SCREEN_WIDTH - 1, 0, constants.STATS_HEIGHT + constants.SCREEN_HEIGHT - 1)
 
     def on_draw(self):
         """ Draw this view """
         self.clear()
-        arcade.draw_text("Game Over", self.window.width / 2, self.window.height / 2,
-                         arcade.color.WHITE, font_size=50, anchor_x="center")
         if self.winner == "humans":
-            pass
+            self.v_box.children[1].text = "Humans Win"
+            # arcade.draw_text("Humans Win", self.window.width / 2, self.window.height / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
         elif self.winner == "zombies":
-            pass
+            self.v_box.children[1].text = "Zombies Win"
+            # arcade.draw_text("Zombies Win", self.window.width / 2, self.window.height / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
         else:
-            pass
-        arcade.draw_text("Press any key to restart", self.window.width / 2, self.window.height / 2 - 75,
-                         arcade.color.WHITE, font_size=20, anchor_x="center")
+            self.v_box.children[1].text = "Draw"
+            # arcade.draw_text("Draw", self.window.width / 2, self.window.height / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
+        # arcade.draw_text("Press any key to restart", self.window.width / 2, self.window.height / 2 - 75,
+        #                  arcade.color.WHITE, font_size=20, anchor_x="center")
+        self.manager.draw()
 
     def on_show_view(self):
         arcade.set_background_color(arcade.color.GRAY_BLUE)
 
         # reset the viewport
         arcade.set_viewport(0, self.window.width, 0, self.window.height)
+
 
     def on_click_restart(self, event):
         """ If the user presses any key, restart the simulation. """
         start_view = MenuScreen()
         self.window.show_view(start_view)
 
-class DelayView(arcade.View):
-    def __init__(self):
-        super().__init__()
+# class DelayView(arcade.View):
+#     def __init__(self):
+#         super().__init__()
 
-        # Reset the viewport
-        arcade.set_viewport(0, constants.SCREEN_WIDTH - 1, 0, constants.STATS_HEIGHT + constants.SCREEN_HEIGHT - 1)
+#         # Reset the viewport
+#         arcade.set_viewport(0, constants.SCREEN_WIDTH - 1, 0, constants.STATS_HEIGHT + constants.SCREEN_HEIGHT - 1)
 
-    def on_show_view(self):
-        arcade.set_background_color(arcade.color.GRAY_BLUE)
-        # reset the viewport
-        arcade.set_viewport(0, self.window.width, 0, self.window.height)
-        time.sleep(1)
-        start_view = MenuScreen()
-        self.window.show_view(start_view)
+#     def on_show_view(self):
+#         arcade.set_background_color(arcade.color.GRAY_BLUE)
+#         # reset the viewport
+#         arcade.set_viewport(0, self.window.width, 0, self.window.height)
+#         time.sleep(1)
+#         start_view = MenuScreen()
+#         self.window.show_view(start_view)
 
 if __name__ == "__main__":
     window = arcade.Window(constants.SCREEN_WIDTH,constants.SCREEN_HEIGHT+constants.STATS_HEIGHT,constants.SCREEN_TITLE)
