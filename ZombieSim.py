@@ -127,19 +127,20 @@ class ZombieSim(arcade.View):
                 # ITEM GENERATION
                 no_item = random.randint(0, constants.ITEM_GEN)
                 if not no_item and i != 8 and j != 8:
-                    item_type = random.randint(0,3)    
+                    item_type = random.randint(5,5)    
                     if item_type == 0:
                         item = Item("images/antidote.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
-                        self.items_list.append(item)
                     elif item_type == 1:
                         item = Item("images/key.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
-                        self.items_list.append(item)
                     elif item_type == 2:
                         item = Item("images/knife.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
-                        self.items_list.append(item)
                     elif item_type == 3:
                         item = Item("images/gun.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
-                        self.items_list.append(item)
+                    elif item_type == 4:
+                        item = Item("images/binoculars.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
+                    elif item_type == 5:
+                        item = Item("images/bicycle.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
+                    self.items_list.append(item)
                     self.all_sprites.append(item)
                     items += [item]
                     
@@ -241,6 +242,10 @@ class ZombieSim(arcade.View):
             items = ""
             if moving.has_item("antidote"):
                 items += "A"
+            if moving.has_item("bicycle"):
+                items += "Bc"
+            if moving.has_item("binoculars"):
+                items += "Bn"
             if moving.has_item("gun"):
                 items += "G"
             if moving.has_item("key"):
@@ -274,8 +279,8 @@ class ZombieSim(arcade.View):
             items = human.collides_with_list(self.items_list)
             for item in items:
                 if item:
-                    human.gain_item(item)
-                    self.remove_item(item)
+                    if human.gain_item(item):
+                        self.remove_item(item)
 
         # Check if any infected should become a zombie    
         for infected in self.infected_list:

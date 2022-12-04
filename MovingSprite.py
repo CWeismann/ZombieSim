@@ -36,6 +36,8 @@ class MovingSprite(arcade.Sprite):
         self.check_time = 0.0 # Time since last a* update
 
         self.antidotes = 0
+        self.bicycle = False
+        self.binoculars = False
         self.keys = 0
         self.knives = 0
         self.guns = 0
@@ -116,15 +118,41 @@ class MovingSprite(arcade.Sprite):
     def gain_item(self, item):
         if item.get_texture() == "antidote":
             self.antidotes += 1
+            return True
+        elif item.get_texture() == "bicycle":
+            if not self.bicycle:
+                self.bicycle = True
+                self.velocity = (self.velocity[0] * 2, self.velocity[1] * 2)
+                return True
+            return False
+        elif item.get_texture() == "binoculars":
+            if not self.binoculars:
+                self.binoculars = True
+                return True
+            return False
         elif item.get_texture() == "key":
             self.keys += 1
+            return True
         elif item.get_texture() == "knife":
             self.knives += 1
+            return True
         elif item.get_texture() == "gun":
             self.guns += 1
+            return True
+
+    def has_enough(self, name):
+        if name == "binoculars" and self.binoculars:
+            return True
+        elif name == "bicycle" and self.bicycle:
+            return True
+        return False
         
     def has_item(self, name):
         if name == "antidote" and self.antidotes:
+            return True
+        elif name == "bicycle" and self.bicycle:
+            return True
+        elif name == "binoculars" and self.binoculars:
             return True
         elif name == "key" and self.keys:
             return True
@@ -138,6 +166,10 @@ class MovingSprite(arcade.Sprite):
         for name in names:
             if name == "antidote":
                 self.antidotes -= 1
+            elif name == "bicycle":
+                self.bicycle = False
+            elif name == "binoculars":
+                self.binoculars = False
             elif name == "key":
                 self.keys -= 1
             elif name == "knife":
@@ -151,8 +183,8 @@ class MovingSprite(arcade.Sprite):
         zom_close = False
         for zom in game.zombies_list:
             # SPEEDSTATE TEMPORARILY DISABLED
-            if arcade.has_line_of_sight(self.position, zom.position, game.walls_list, constants.HUMAN_VISION, 2):
-            # if arcade.has_line_of_sight(self.position, zom.position, game.walls_list, int(constants.HUMAN_VISION * (int(zom.speed_state)/1.5)), 2):
+            if arcade.has_line_of_sight(self.position, zom.position, game.walls_list, constants.HUMAN_VISION + self.binoculars*100, 2):
+            # if arcade.has_line_of_sight(self.position, zom.position, game.walls_list, int(constants.HUMAN_VISION  + self.binoculars*100 * (int(zom.speed_state)/1.5)), 2):
                 if self.has_item("gun"):
                     self.use_items(["gun"])
                     game.destroy(zom)
@@ -200,8 +232,9 @@ class MovingSprite(arcade.Sprite):
     def update_LoS_to_i(self, game):
         visible_items = arcade.SpriteList()
         for item in game.items_list:
-            if arcade.has_line_of_sight(self.position, item.position, game.walls_list, constants.HUMAN_VISION, 2):
-                visible_items.append(item)
+            if not self.has_enough(item.get_texture()):
+                if arcade.has_line_of_sight(self.position, item.position, game.walls_list, constants.HUMAN_VISION + self.binoculars*100, 2):
+                    visible_items.append(item)
         if visible_items:
             nearest_item, dist_to_ni = arcade.get_closest_sprite(self, visible_items)
             return (nearest_item.center_x, nearest_item.center_y)
@@ -213,7 +246,7 @@ class MovingSprite(arcade.Sprite):
     def update_LoS_to_door(self, game):
         visible_doors = arcade.SpriteList()
         for door in game.doors_list:
-            if arcade.has_line_of_sight(self.position, door.position, game.walls_list, constants.HUMAN_VISION, 2):
+            if arcade.has_line_of_sight(self.position, door.position, game.walls_list, constants.HUMAN_VISION + self.binoculars*100, 2):
                 visible_doors.append(door)
         if visible_doors:
             nearest_door, dist_to_ni = arcade.get_closest_sprite(self, visible_doors)
@@ -250,12 +283,12 @@ class MovingSprite(arcade.Sprite):
         # DECISION TREE - In Active Development
         visibleZom = False
         for zom in game.zombies_list:
-            if arcade.has_line_of_sight(self.position,zom.position,game.walls_list,constants.HUMAN_VISION):
+            if arcade.has_line_of_sight(self.position,zom.position,game.walls_list,constants.HUMAN_VISION + self.binoculars*100):
                 visibleZom = True
                 break
         visibleItem = False
         for item in game.items_list:
-            if arcade.has_line_of_sight(self.position,item.position,game.walls_list,constants.HUMAN_VISION):
+            if arcade.has_line_of_sight(self.position,item.position,game.walls_list,constants.HUMAN_VISION + self.binoculars*100):
                 visibleItem = True
                 break
         if self.mood == Mood.RELAXED:

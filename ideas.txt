@@ -36,7 +36,7 @@ items
     medpack: heals infected human
     -antidote: turns zombie back into human
     bicycle: increase move speed while still human
-    binoculars: improve sight range while human
+    -binoculars: improve sight range while human
     bullets: reloads gun
     -key: can lock doors against other humans
     dog: attacks closest zombie, but might become one too

@@ -15,7 +15,7 @@ class Item(arcade.Sprite):
         self.antidote_texture = arcade.load_texture("images/antidote.png")
         self.bicycle_texture = arcade.load_texture("images/bicycle.png")
         self.binoculars_texture = arcade.load_texture("images/binoculars.png")
-        self.bicycle_texture = arcade.load_texture("images/bullets.png")
+        self.bullets_texture = arcade.load_texture("images/bullets.png")
         self.disguise_texture = arcade.load_texture("images/disguise.png")
         self.dog_texture = arcade.load_texture("images/dog.png")
         self.gun_texture = arcade.load_texture("images/gun.png")
@@ -28,6 +28,10 @@ class Item(arcade.Sprite):
     def get_texture(self):
         if self.texture == self.antidote_texture:
             return "antidote"
+        elif self.texture == self.bicycle_texture:
+            return "bicycle"
+        elif self.texture == self.binoculars_texture:
+            return "binoculars"
         elif self.texture == self.key_texture:
             return "key"
         elif self.texture == self.knife_texture:
