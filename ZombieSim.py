@@ -213,7 +213,7 @@ class ZombieSim(arcade.View):
         
         if self.check_end_time >= 5:
             self.check_end_time = 0
-            if len(self.zombies_list) == 0:
+            if len(self.zombies_list) == 0 and len(self.infected_list) == 0:
                 print("GAME OVER - HUMANS WIN")
                 game_over_view = GameOver("humans")
                 self.window.show_view(game_over_view)
@@ -314,17 +314,18 @@ class ZombieSim(arcade.View):
             struck_wall = moving.collides_with_list(self.walls_list)
             hit_wall_x = False
             hit_wall_y = False
+            r_off = random.random()/10 - 0.05
             if struck_wall:
                 wall_tex = struck_wall[0].get_texture()
                 if wall_tex == "vert" or (moving.get_texture() == "zombie" and wall_tex == "vert_door"):
-                    moving.velocity = (-oldvel[0],oldvel[1])
+                    moving.velocity = (-oldvel[0]-r_off,oldvel[1]+r_off)
                     hit_wall_x = True
                     if oldvel[0] < 0:
                         moving.left = struck_wall[0].right
                     else:
                         moving.right = struck_wall[0].left
                 elif wall_tex == "horiz" or (moving.get_texture() == "zombie" and wall_tex == "horiz_door"):         
-                    moving.velocity = (oldvel[0],-oldvel[1]) 
+                    moving.velocity = (oldvel[0]+r_off,-oldvel[1]-r_off) 
                     hit_wall_y = True
                     if oldvel[1] < 0:
                         moving.bottom = struck_wall[0].top
@@ -348,19 +349,19 @@ class ZombieSim(arcade.View):
             hit_edge_x = False
             hit_edge_y = False
             if moving.bottom < constants.STATS_HEIGHT:
-                moving.velocity = (oldvel[0],-oldvel[1])
+                moving.velocity = (oldvel[0]+r_off,-oldvel[1]-r_off)
                 moving.bottom = constants.STATS_HEIGHT
                 hit_edge_y = True
             if moving.left < 0:
-                moving.velocity = (-oldvel[0],oldvel[1])
+                moving.velocity = (-oldvel[0]-r_off,oldvel[1]+r_off)
                 moving.left = 0
                 hit_edge_x = True
             if moving.top > constants.STATS_HEIGHT + constants.SCREEN_HEIGHT:
-                moving.velocity = (oldvel[0],-oldvel[1])
+                moving.velocity = (oldvel[0]+r_off,-oldvel[1]-r_off)
                 moving.top = constants.STATS_HEIGHT + constants.SCREEN_HEIGHT
                 hit_edge_y = True
             if moving.right > constants.SCREEN_WIDTH:
-                moving.velocity = (-oldvel[0],oldvel[1])
+                moving.velocity = (-oldvel[0]-r_off,oldvel[1]+r_off)
                 moving.right = constants.SCREEN_WIDTH
                 hit_edge_x = True
 
@@ -838,12 +839,27 @@ class GameOver(arcade.View):
             "font_color_pressed": arcade.color.BLACK,
         }
 
+        # fake button for labeling
+        none_style = {
+            "font_name": ("calibri", "arial"),
+            "font_size": 15,
+            "font_color": arcade.color.WHITE,
+            "border_width": 2,
+            "border_color": None,
+            "bg_color": (41, 39, 41),
+            
+            # used if button is pressed
+            "bg_color_pressed": (41, 39, 41),
+            "border_color_pressed": None,  # also used when hovered
+            "font_color_pressed": arcade.color.WHITE,
+        }
+
         self.v_box = arcade.gui.UIBoxLayout(vertical=True,space_between=20)
         restart_button = arcade.gui.UIFlatButton(text="Restart", width=200, style=default_style)
-        end_text = arcade.gui.UILabel(width=200,style=default_style)
+        end_text = arcade.gui.UIFlatButton(text="_", width=200,style=none_style)
 
-        self.v_box.add(restart_button)
         self.v_box.add(end_text)
+        self.v_box.add(restart_button)
 
         restart_button.on_click = self.on_click_restart
         
@@ -859,13 +875,13 @@ class GameOver(arcade.View):
         """ Draw this view """
         self.clear()
         if self.winner == "humans":
-            self.v_box.children[1].text = "Humans Win"
+            self.v_box.children[0].text = "Humans Win"
             # arcade.draw_text("Humans Win", self.window.width / 2, self.window.height / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
         elif self.winner == "zombies":
-            self.v_box.children[1].text = "Zombies Win"
+            self.v_box.children[0].text = "Zombies Win"
             # arcade.draw_text("Zombies Win", self.window.width / 2, self.window.height / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
         else:
-            self.v_box.children[1].text = "Draw"
+            self.v_box.children[0].text = "Draw"
             # arcade.draw_text("Draw", self.window.width / 2, self.window.height / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
         # arcade.draw_text("Press any key to restart", self.window.width / 2, self.window.height / 2 - 75,
         #                  arcade.color.WHITE, font_size=20, anchor_x="center")
@@ -879,7 +895,7 @@ class GameOver(arcade.View):
 
 
     def on_click_restart(self, event):
-        """ If the user presses any key, restart the simulation. """
+        """ If the user presses restart, restart the simulation. """
         start_view = MenuScreen()
         self.window.show_view(start_view)
 
