@@ -38,9 +38,10 @@ class MovingSprite(arcade.Sprite):
         self.antidotes = 0
         self.bicycle = False
         self.binoculars = False
+        self.bullets = 0
         self.keys = 0
         self.knives = 0
-        self.guns = 0
+        self.gun = False
 
         self.path = []
 
@@ -130,6 +131,11 @@ class MovingSprite(arcade.Sprite):
                 self.binoculars = True
                 return True
             return False
+        elif item.get_texture() == "bullets":
+            if self.gun:
+                self.bullets += 1
+                return True
+            return False
         elif item.get_texture() == "key":
             self.keys += 1
             return True
@@ -137,13 +143,18 @@ class MovingSprite(arcade.Sprite):
             self.knives += 1
             return True
         elif item.get_texture() == "gun":
-            self.guns += 1
-            return True
+            if not self.gun:
+                self.gun = True
+                self.bullets += 1
+                return True
+            return False
 
     def has_enough(self, name):
         if name == "binoculars" and self.binoculars:
             return True
         elif name == "bicycle" and self.bicycle:
+            return True
+        elif name == "bullets" and not self.gun:
             return True
         return False
         
@@ -154,11 +165,13 @@ class MovingSprite(arcade.Sprite):
             return True
         elif name == "binoculars" and self.binoculars:
             return True
+        elif name == "bullets" and self.bullets:
+            return True
         elif name == "key" and self.keys:
             return True
         elif name == "knife" and self.knives:
             return True
-        elif name == "gun" and self.guns:
+        elif name == "gun" and self.gun:
             return True
 
 
@@ -170,12 +183,14 @@ class MovingSprite(arcade.Sprite):
                 self.bicycle = False
             elif name == "binoculars":
                 self.binoculars = False
+            elif name == "bullets":
+                self.bullets -= 1
             elif name == "key":
                 self.keys -= 1
             elif name == "knife":
                 self.knives -= 1
-            elif name == "gun":     #eventually will change this to use bullets
-                self.guns -= 1
+            elif name == "gun":
+                self.gun = False
 
     def update_LoS_to_z(self, game):
         xcoords = []
@@ -185,8 +200,8 @@ class MovingSprite(arcade.Sprite):
             # SPEEDSTATE TEMPORARILY DISABLED
             if arcade.has_line_of_sight(self.position, zom.position, game.walls_list, constants.HUMAN_VISION + self.binoculars*100, 2):
             # if arcade.has_line_of_sight(self.position, zom.position, game.walls_list, int(constants.HUMAN_VISION  + self.binoculars*100 * (int(zom.speed_state)/1.5)), 2):
-                if self.has_item("gun"):
-                    self.use_items(["gun"])
+                if self.has_item("gun") and self.has_item("bullets"):
+                    self.use_items(["bullets"])
                     game.destroy(zom)
                 zom_close = True
                 xcoords.append(zom.center_x)

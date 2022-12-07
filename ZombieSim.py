@@ -127,7 +127,7 @@ class ZombieSim(arcade.View):
                 # ITEM GENERATION
                 no_item = random.randint(0, constants.ITEM_GEN)
                 if not no_item and i != 8 and j != 8:
-                    item_type = random.randint(5,5)    
+                    item_type = random.randint(0,6)    
                     if item_type == 0:
                         item = Item("images/antidote.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
                     elif item_type == 1:
@@ -140,6 +140,9 @@ class ZombieSim(arcade.View):
                         item = Item("images/binoculars.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
                     elif item_type == 5:
                         item = Item("images/bicycle.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
+                    elif item_type == 6:
+                        item = Item("images/bullets.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
+
                     self.items_list.append(item)
                     self.all_sprites.append(item)
                     items += [item]
@@ -246,6 +249,8 @@ class ZombieSim(arcade.View):
                 items += "Bc"
             if moving.has_item("binoculars"):
                 items += "Bn"
+            if moving.has_item("bullets"):
+                items += "Bu"
             if moving.has_item("gun"):
                 items += "G"
             if moving.has_item("key"):
@@ -293,8 +298,8 @@ class ZombieSim(arcade.View):
                 elif infected.has_item("knife"):
                     infected.use_items(["knife"])
                     self.destroy(infected)
-                elif infected.has_item("gun"):
-                    infected.use_items(["gun"])
+                elif infected.has_item("gun") and infected.has_item("bullets"):
+                    infected.use_items(["bullets"])
                     self.destroy(infected)
                 else:
                     self.make_zombie(infected)
@@ -415,7 +420,7 @@ class ZombieSim(arcade.View):
                     v_len = math.sqrt(xvel**2 + yvel**2)
                     moving.velocity = (xvel/v_len)*moving.sprite_speed, (yvel/v_len)*moving.sprite_speed
 
-                # MOVE TOWARDS ITEMS - BUGGY
+                # MOVE TOWARDS ITEMS - FUNCTIONAL
                 else:
                     # move_vector_i = moving.update_LoS_to_i(self)
                     # if move_vector_i and not (struck_wall or hit_edge_x or hit_edge_y):
@@ -550,10 +555,6 @@ class ZombieSim(arcade.View):
         new_human.base_speed = math.sqrt(velocity[0]**2 + velocity[1]**2)
         new_human.reset_infection_time()
         self.humans_list.append(new_human)
-        # if len(self.zombies_list) == 0:
-        #     print("GAME OVER - HUMANS WIN")
-        #     game_over_view = MenuScreen()
-        #     self.window.show_view(game_over_view)
 
     def make_infected(self, new_infected):
         """
@@ -574,11 +575,7 @@ class ZombieSim(arcade.View):
         oldvel = new_zombie.velocity
         velocity = (oldvel[0]-constants.HUMAN_SPEED_MIN+constants.ZOMBIE_SPEED_MIN, oldvel[1]-constants.HUMAN_SPEED_MIN+constants.ZOMBIE_SPEED_MIN)
         new_zombie.base_speed = math.sqrt(velocity[0]**2 + velocity[1]**2)
-        self.zombies_list.append(new_zombie)  
-        # if len(self.humans_list) == 0 and len(self.infected_list) == 0:
-        #     print("GAME OVER - ZOMBIES WIN")
-        #     game_over_view = MenuScreen()
-        #     self.window.show_view(game_over_view)
+        self.zombies_list.append(new_zombie)
 
     def destroy(self, killed):
         if killed in self.humans_list:
@@ -588,12 +585,6 @@ class ZombieSim(arcade.View):
         if killed in self.zombies_list:
             self.zombies_list.remove(killed)
         killed.become_dead()
-        # if len(self.zombies_list) == 0:
-        #     print("GAME OVER - HUMANS WIN")
-        #     game_over_view = MenuScreen()
-        #     self.window.show_view(game_over_view)
-        # self.moving_list.remove(killed)
-        #self.all_sprites.remove(killed)
 
     def remove_item(self, item):
         self.items_list.remove(item)
@@ -881,15 +872,10 @@ class GameOver(arcade.View):
         self.clear()
         if self.winner == "humans":
             self.v_box.children[0].text = "Humans Win"
-            # arcade.draw_text("Humans Win", self.window.width / 2, self.window.height / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
         elif self.winner == "zombies":
             self.v_box.children[0].text = "Zombies Win"
-            # arcade.draw_text("Zombies Win", self.window.width / 2, self.window.height / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
         else:
             self.v_box.children[0].text = "Draw"
-            # arcade.draw_text("Draw", self.window.width / 2, self.window.height / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
-        # arcade.draw_text("Press any key to restart", self.window.width / 2, self.window.height / 2 - 75,
-        #                  arcade.color.WHITE, font_size=20, anchor_x="center")
         self.manager.draw()
 
     def on_show_view(self):
@@ -903,21 +889,6 @@ class GameOver(arcade.View):
         """ If the user presses restart, restart the simulation. """
         start_view = MenuScreen()
         self.window.show_view(start_view)
-
-# class DelayView(arcade.View):
-#     def __init__(self):
-#         super().__init__()
-
-#         # Reset the viewport
-#         arcade.set_viewport(0, constants.SCREEN_WIDTH - 1, 0, constants.STATS_HEIGHT + constants.SCREEN_HEIGHT - 1)
-
-#     def on_show_view(self):
-#         arcade.set_background_color(arcade.color.GRAY_BLUE)
-#         # reset the viewport
-#         arcade.set_viewport(0, self.window.width, 0, self.window.height)
-#         time.sleep(1)
-#         start_view = MenuScreen()
-#         self.window.show_view(start_view)
 
 if __name__ == "__main__":
     window = arcade.Window(constants.SCREEN_WIDTH,constants.SCREEN_HEIGHT+constants.STATS_HEIGHT,constants.SCREEN_TITLE)

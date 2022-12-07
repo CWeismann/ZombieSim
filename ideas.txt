@@ -37,14 +37,14 @@ items
     -antidote: turns zombie back into human
     bicycle: increase move speed while still human
     -binoculars: improve sight range while human
-    bullets: reloads gun
+    -bullets: reloads gun
     -key: can lock doors against other humans
     dog: attacks closest zombie, but might become one too
     disguise: zombies will not approach
     scanner: can recognize infected
 -make infected use items (will heal themselves using antidote or kill themselves using gun/knife)
 game should be able to start with infected?
-limited use vs. unlimited use items
+-limited use vs. unlimited use items
 loot corpses
 corpses transform into zombies
 zombies can break down doors
