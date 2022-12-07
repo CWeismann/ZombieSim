@@ -35,7 +35,7 @@ items
     -gun: might kill zombie in line of sight
     medpack: heals infected human
     -antidote: turns zombie back into human
-    bicycle: increase move speed while still human
+    -bicycle: increase move speed while still human
     -binoculars: improve sight range while human
     -bullets: reloads gun
     -key: can lock doors against other humans

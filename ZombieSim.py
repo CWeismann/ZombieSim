@@ -11,7 +11,7 @@ from Item import Item
 
 class ZombieSim(arcade.View):
     """
-    The game itself
+    The simulation itself
     """
 
     def __init__(self):
