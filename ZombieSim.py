@@ -229,6 +229,30 @@ class ZombieSim(arcade.View):
                 print("GAME OVER - DRAW")
                 game_over_view = GameOver("draw")
                 self.window.show_view(game_over_view)
+            
+            no_item = random.randint(0, constants.ITEM_GEN)
+            if not no_item:
+                i = random.randint(0,7)
+                j = random.randint(0,7)
+                item_type = random.randint(0,6)    
+                if item_type == 0:
+                    item = Item("images/antidote.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
+                elif item_type == 1:
+                    item = Item("images/key.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
+                elif item_type == 2:
+                    item = Item("images/knife.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
+                elif item_type == 3:
+                    item = Item("images/gun.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
+                elif item_type == 4:
+                    item = Item("images/binoculars.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
+                elif item_type == 5:
+                    item = Item("images/bicycle.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
+                elif item_type == 6:
+                    item = Item("images/bullets.png", constants.SCALING/20, 50*i+225, 50*j+125 + constants.STATS_HEIGHT)
+
+                self.items_list.append(item)
+                self.all_sprites.append(item)
+                # items += [item]
 
         mcount = 0
         for moving in self.moving_list:
@@ -683,7 +707,7 @@ class Settings(arcade.View):
 
         # fake button for labeling
         none_style = {
-            "font_name": ("calibri", "arial"),
+            "font_name": ("Kenney Pixel Square", "calibri", "arial"),
             "font_size": 15,
             "font_color": arcade.color.WHITE,
             "border_width": 2,
@@ -701,6 +725,8 @@ class Settings(arcade.View):
         self.h_box_1 = arcade.gui.UIBoxLayout(vertical=False,space_between=10)
         self.h_box_2 = arcade.gui.UIBoxLayout(vertical=False,space_between=10)
         self.h_box_3 = arcade.gui.UIBoxLayout(vertical=False,space_between=10)
+        self.h_box_4 = arcade.gui.UIBoxLayout(vertical=False,space_between=10)
+        self.h_box_5 = arcade.gui.UIBoxLayout(vertical=False,space_between=10)
 
         # Create the buttons
         
@@ -715,6 +741,14 @@ class Settings(arcade.View):
         prev_map_button = arcade.gui.UIFlatButton(text="<", width=50, style=default_style)
         map_button = arcade.gui.UIFlatButton(text=f"RANDOM", width=200, style=none_style)
         next_map_button = arcade.gui.UIFlatButton(text=">", width=50, style=default_style)
+        minus_zom_button = arcade.gui.UIFlatButton(text="-", width=50, style=default_style)
+
+        minus_wall_button = arcade.gui.UIFlatButton(text="-", width=50, style=default_style)
+        wall_button = arcade.gui.UIFlatButton(text=f"1/{constants.WALL_GEN+1} Wall Spawn", width=200, style=none_style)
+        plus_wall_button = arcade.gui.UIFlatButton(text="+", width=50, style=default_style)
+        minus_item_button = arcade.gui.UIFlatButton(text="-", width=50, style=default_style)
+        item_button = arcade.gui.UIFlatButton(text=f"1/{constants.ITEM_GEN+1} Item Spawn", width=200, style=none_style)
+        plus_item_button = arcade.gui.UIFlatButton(text="+", width=50, style=default_style)
         
 
         save_button = arcade.gui.UIFlatButton(text="Save", width=200, style=default_style)
@@ -729,11 +763,19 @@ class Settings(arcade.View):
         self.h_box_3.add(prev_map_button)
         self.h_box_3.add(map_button)
         self.h_box_3.add(next_map_button)
+        self.h_box_4.add(minus_wall_button)
+        self.h_box_4.add(wall_button)
+        self.h_box_4.add(plus_wall_button)
+        self.h_box_5.add(minus_item_button)
+        self.h_box_5.add(item_button)
+        self.h_box_5.add(plus_item_button)
 
         # v_box holds the two horizontal boxes and save button
         self.v_box.add(self.h_box_1)
         self.v_box.add(self.h_box_2)
         self.v_box.add(self.h_box_3)
+        self.v_box.add(self.h_box_4)
+        self.v_box.add(self.h_box_5)
         self.v_box.add(save_button)
 
         plus_zom_button.on_click = self.on_click_zp
@@ -743,6 +785,11 @@ class Settings(arcade.View):
 
         next_map_button.on_click = self.on_click_mn
         prev_map_button.on_click = self.on_click_mp
+
+        plus_wall_button.on_click = self.on_click_pw
+        minus_wall_button.on_click = self.on_click_mw
+        plus_item_button.on_click = self.on_click_pi
+        minus_item_button.on_click = self.on_click_mi
 
         save_button.on_click = self.on_click_save
 
@@ -804,6 +851,23 @@ class Settings(arcade.View):
             self.h_box_3.children[1].text = f"MAP {constants.MAP_NUMBER}"
         else:
             self.h_box_3.children[1].text = f"RANDOM"
+
+    def on_click_pw(self, event):
+        constants.WALL_GEN -= 1
+        if constants.WALL_GEN < 0:
+            constants.WALL_GEN = 0
+        self.h_box_4.children[1].text = f"1/{constants.WALL_GEN+1} Wall Spawn"
+    def on_click_mw(self, event):
+        constants.WALL_GEN += 1
+        self.h_box_4.children[1].text = f"1/{constants.WALL_GEN+1} Wall Spawn"
+    def on_click_pi(self, event):
+        constants.ITEM_GEN -= 1
+        if constants.ITEM_GEN < 0:
+            constants.ITEM_GEN = 0
+        self.h_box_5.children[1].text = f"1/{constants.ITEM_GEN+1} Item Spawn"
+    def on_click_mi(self, event):
+        constants.ITEM_GEN += 1
+        self.h_box_5.children[1].text = f"1/{constants.ITEM_GEN+1} Item Spawn"
 
     def on_click_save(self, event):
         """ Returns to the start window """

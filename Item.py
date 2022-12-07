@@ -34,11 +34,11 @@ class Item(arcade.Sprite):
             return "binoculars"
         elif self.texture == self.bullets_texture:
             return "bullets"
+        elif self.texture == self.gun_texture:
+            return "gun"
         elif self.texture == self.key_texture:
             return "key"
         elif self.texture == self.knife_texture:
             return "knife"
-        elif self.texture == self.gun_texture:
-            return "gun"
         else:
             return "other"
